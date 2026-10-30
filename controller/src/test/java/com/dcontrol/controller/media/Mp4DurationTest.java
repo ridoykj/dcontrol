@@ -1,4 +1,4 @@
-package com.dcontrol.controller.camera;
+package com.dcontrol.controller.media;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

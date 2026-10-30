@@ -65,4 +65,9 @@ Spec: docs/protocol/ws-v1.md
 | `camera.signal` | phone <-> controller <-> one web socket (no result) |
 | `camera.switch` | web -> controller -> phone (command) |
 | `camera.capture` | web -> controller -> phone (command) |
+| `mic.start` | web -> controller -> phone (command) |
+| `mic.state` | phone -> controller -> one web socket (event) |
+| `mic.stop` | web -> controller -> phone (no result) |
+| `mic.signal` | phone <-> controller <-> one web socket (no result) |
+| `mic.capture` | web -> controller -> phone (command) |
 | `error` | controller -> phone | web |

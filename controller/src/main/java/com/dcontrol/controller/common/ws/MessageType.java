@@ -67,6 +67,11 @@ public enum MessageType {
     CAMERA_SIGNAL("camera.signal", "phone <-> controller <-> one web socket (no result)"),
     CAMERA_SWITCH("camera.switch", "web -> controller -> phone (command)"),
     CAMERA_CAPTURE("camera.capture", "web -> controller -> phone (command)"),
+    MIC_START("mic.start", "web -> controller -> phone (command)"),
+    MIC_STATE("mic.state", "phone -> controller -> one web socket (event)"),
+    MIC_STOP("mic.stop", "web -> controller -> phone (no result)"),
+    MIC_SIGNAL("mic.signal", "phone <-> controller <-> one web socket (no result)"),
+    MIC_CAPTURE("mic.capture", "web -> controller -> phone (command)"),
     ERROR("error", "controller -> phone | web");
 
     public static final String RESULT_SUFFIX = ".result";

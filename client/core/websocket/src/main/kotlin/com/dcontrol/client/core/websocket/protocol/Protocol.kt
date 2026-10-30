@@ -134,6 +134,19 @@ object MessageTypes {
 
     // Phase 5 events (phone -> controller)
     const val CAMERA_STATE = "camera.state"
+
+    // Phase 6 commands (controller -> phone)
+    const val MIC_START = "mic.start"
+    const val MIC_CAPTURE = "mic.capture"
+
+    // Phase 6 controller -> phone events (no requestId)
+    const val MIC_STOP = "mic.stop"
+
+    // Phase 6 both directions, shaped like rtc.signal: OFFER is phone -> controller, ANSWER controller -> phone
+    const val MIC_SIGNAL = "mic.signal"
+
+    // Phase 6 events (phone -> controller)
+    const val MIC_STATE = "mic.state"
 }
 
 /** Values of `error.details.permission` with `PERMISSION_REQUIRED` (ws-v1.md, Phase 3 additions). */
@@ -149,6 +162,9 @@ object Permissions {
 
     // Phase 5
     const val CAMERA = "CAMERA"
+
+    // Phase 6
+    const val MICROPHONE = "MICROPHONE"
 }
 
 /** The only codes a phone may answer commands with (ws-v1.md, Phase 2 additions). */

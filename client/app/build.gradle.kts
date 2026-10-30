@@ -41,6 +41,7 @@ dependencies {
     implementation(project(":feature:screen"))
     implementation(project(":feature:findphone"))
     implementation(project(":feature:camera"))
+    implementation(project(":feature:mic"))
     implementation(project(":core:accessibility"))
     implementation(project(":core:telephony"))
     implementation(project(":core:storage"))

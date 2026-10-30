@@ -13,6 +13,7 @@ const SECTIONS = [
   "overview",
   "screen",
   "camera",
+  "mic",
   "files",
   "notifications",
   "clipboard",
@@ -43,6 +44,9 @@ export function DeviceLayout({ deviceId }: { deviceId: string }) {
         break;
       case "camera":
         void navigate({ to: "/devices/$deviceId/camera", params });
+        break;
+      case "mic":
+        void navigate({ to: "/devices/$deviceId/mic", params });
         break;
       case "find":
         void navigate({ to: "/devices/$deviceId/find", params });
@@ -91,6 +95,7 @@ export function DeviceLayout({ deviceId }: { deviceId: string }) {
               <Tab id="overview">Overview</Tab>
               <Tab id="screen">Screen</Tab>
               <Tab id="camera">Camera</Tab>
+              <Tab id="mic">Microphone</Tab>
               <Tab id="files">Files</Tab>
               <Tab id="notifications">Notifications</Tab>
               <Tab id="clipboard">Clipboard</Tab>

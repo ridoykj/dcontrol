@@ -29,7 +29,7 @@ relays signaling and never sees the media.** Remote input is described in [remot
 
 ## TURN and ICE
 
-- `compose.yaml` runs `coturn/coturn:4.18.0-alpine` on port 3478 (UDP/TCP) with relay ports 49160–49200/udp.
+- `compose.yaml` runs `coturn/coturn:4.18.0-alpine` on port 3478 (UDP/TCP) with relay ports 40000–40040/udp.
 - **Credentials:** the controller hands each socket short-lived TURN credentials in coturn's
   `use-auth-secret` scheme, signed with `dcontrol.webrtc.turn-secret`. They are valid for
   `dcontrol.webrtc.credential-ttl` (12 h); coturn refuses allocation refreshes after that, which caps a session's

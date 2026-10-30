@@ -998,3 +998,124 @@ The slot is used up even when the upload is rejected, so the waiting command fai
 Captures are kept on disk for `dcontrol.camera.media-retention` (30 min), at most
 `dcontrol.camera.max-retained` (20) per phone, oldest removed first. They are also removed when the phone is
 unpaired.
+
+## Phase 6 additions (still v1; all additive)
+
+Phase 6 adds a consent-gated remote microphone: live listening and short audio clips. It is the camera session
+(Phase 5) without video:
+
+- **Live audio** goes peer to peer over WebRTC, or through the TURN relay. The phone's offer has one audio m-line
+  and no video. The controller only relays signaling.
+- **Clips** are AAC in an MPEG-4 container (`.m4a`). The phone encodes them from the same microphone samples it
+  streams, so live audio keeps playing while a clip records. They pass through the controller's short-lived disk
+  spool, never the database.
+- **Consent:** the phone owner accepts every session on the phone, and the phone shows an ongoing notification with
+  Stop for as long as it runs. See `docs/features/microphone.md`.
+
+### `PERMISSION_REQUIRED` values
+
+`details.permission` also accepts `MICROPHONE`: `RECORD_AUDIO` isn't granted.
+
+### Error code additions
+
+- `RATE_LIMITED` also covers `mic.start` and `mic.capture` for one phone.
+- `CONFLICT` also covers:
+  - a `mic.start` while a camera or screen session of the phone is using the microphone;
+  - a `mic.capture` while the session isn't `LIVE` or another clip is recording.
+
+### The microphone has one user
+
+The phone hands the microphone to one session at a time. A `mic.start` while a camera or screen session with audio
+runs fails with `CONFLICT`. A `camera.start` or `screen.start` with `audio: true` while a microphone session runs
+starts without audio and answers `{ "audio": false }`.
+
+### Microphone session
+
+```
+web                          controller                               phone
+ | mic.start (command) -----> | checks owner, limit, audits              |
+ |                            | creates sessionId -- mic.start ------->  | (command)
+ | <-- mic.start.result ----- | <---------------- mic.start.result --    | {}
+ |                            | <---------- mic.state AWAITING_CONSENT   | "Tap to share your microphone"
+ | <-- mic.state ------------ |                                          | owner accepts
+ | <-- mic.signal OFFER ----- | <------------------- mic.signal OFFER -- | ICE gathered (≤ 4 s)
+ | mic.signal ANSWER -------> | ----------------------- mic.signal ----> |
+ | <-- mic.state LIVE ------- | <---------------------- mic.state LIVE   |
+ | mic.capture -------------> | opens upload slot -- mic.capture ------> | records a clip
+ |                            | <----- PUT /api/device-api/mic/{mediaId} | upload
+ | <-- mic.capture.result --- | <-------------- mic.capture.result ----- |
+ | GET .../mic/media/{id}     |                                          |
+ | mic.stop ----------------> | ------------------------ mic.stop -----> |
+```
+
+**Session rules:** those of the camera session, with `mic.*` types and `dcontrol.mic.*` settings: non-trickle, the
+phone offers, no data channel, one session per phone (a new start ends the old one with `REPLACED`), owned by the
+browser socket that started it, ended by the controller on socket close, `DEVICE_OFFLINE` or the consent timeout
+(`dcontrol.mic.consent-timeout`, 60 s). A microphone session is independent of camera and screen sessions apart
+from the microphone rule above.
+
+**Values:** `state` and `reason` as for the camera session.
+
+#### `mic.start` (web → controller → phone, command)
+
+| Direction | Payload |
+|---|---|
+| web → controller | `{ "deviceId" }` |
+| controller → phone | `{ "sessionId": uuid, "viewer": string ≤ 100, "iceServers": [IceServer, ≤ 8] }` |
+| phone → controller result | `{}` |
+| controller → web result | `{ "sessionId", "iceServers": [IceServer] }` |
+
+- The phone answers as soon as it has accepted the request, before the owner accepts and before any `mic.state`.
+- **Asking for consent:** directly while the app is in the foreground, otherwise through a high-importance "Tap to
+  share your microphone" notification. Never automatic.
+- **Phone errors:** `PERMISSION_REQUIRED` (`MICROPHONE`; the phone shows nothing), `CONFLICT` (the microphone is in
+  use by a camera or screen session), `INTERNAL`.
+- **Controller errors:** `RATE_LIMITED` (more than `dcontrol.mic.start-per-minute`, 6 per phone), `NOT_FOUND`,
+  `DEVICE_OFFLINE`, `TIMEOUT`.
+
+#### `mic.state` (phone → controller → that browser)
+
+| Direction | Payload |
+|---|---|
+| phone → controller (event) | `{ "sessionId", "state", "reason": string \| null }` |
+| controller → web | `{ "deviceId", "sessionId", "state", "reason" }` |
+
+#### `mic.signal` (both directions)
+
+The same shape and rules as `camera.signal`: `OFFER` from the phone, `ANSWER` from the browser, SDP ≤ 32768.
+
+#### `mic.stop`
+
+The same as `camera.stop`: `{ "sessionId" }` from the browser and to the phone, no result. The phone ends silently.
+
+#### `mic.capture` (web → controller → phone, command)
+
+| Direction | Payload |
+|---|---|
+| web → controller | `{ "sessionId", "durationMs": int }` |
+| controller → phone | `{ "sessionId", "mediaId": uuid, "durationMs" }` |
+| phone → controller result | `{ "durationMs": int \| null }` |
+| controller → web result | `{ "mediaId", "mime", "bytes", "durationMs", "capturedAt" }` |
+
+- **`durationMs`:** 1000 to `dcontrol.mic.max-audio-duration` (5 min).
+- **The controller checks** that the session is `LIVE` and no other clip is recording (`CONFLICT`), and the rate
+  limit `dcontrol.mic.capture-per-minute` (20 per phone; `RATE_LIMITED`). Then it opens an upload slot and relays.
+- **The phone** records `durationMs` of the live microphone samples as AAC in MPEG-4, uploads it to the slot, then
+  answers. Errors: `CONFLICT` (busy or not `LIVE`), `INTERNAL`, and the upload refusals mapped as for
+  `camera.capture` (404 → `NOT_FOUND`, 413 → `PAYLOAD_TOO_LARGE`, 415 → `UNSUPPORTED`).
+- The command times out after `dcontrol.mic.capture-timeout` (6 min) with `TIMEOUT`.
+- In the web result, `mime` (`audio/mp4`), `bytes` and `durationMs` come from the upload, never from the phone.
+
+**The phone's upload:** `PUT /api/device-api/mic/{mediaId}`, with `Authorization: Device id.secret`,
+`Content-Type: audio/mp4`, and the file as the body. `204` accepted; `404` unknown, expired, used or another
+device's slot; `413` larger than `dcontrol.mic.max-audio-size` (20 MiB); `415` not an MPEG-4 file (`ftyp` at
+offset 4), no readable length, or longer than the maximum plus 1 s. The slot is used up even when the upload is
+rejected.
+
+### Microphone media (web, REST)
+
+`GET /api/devices/{deviceId}/mic/media/{mediaId}` returns a clip with `Content-Type: audio/mp4`, `nosniff`,
+`Cache-Control: private, max-age=1800` and `Content-Disposition: inline` with a name such as
+`mic-20261030-101530.m4a`. `404` `NOT_FOUND` for unknown, expired or another account's media. Clips are kept for
+`dcontrol.mic.media-retention` (30 min), at most `dcontrol.mic.max-retained` (20) per phone, and removed when the
+phone is unpaired or the controller restarts.

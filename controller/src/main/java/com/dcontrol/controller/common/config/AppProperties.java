@@ -31,7 +31,8 @@ public record AppProperties(
         @NotNull @Valid Blobs blobs,
         @NotNull @Valid Webrtc webrtc,
         @NotNull @Valid Find find,
-        @NotNull @Valid Camera camera) {
+        @NotNull @Valid Camera camera,
+        @NotNull @Valid Mic mic) {
 
     public record Jwt(
             @NotBlank @Size(min = 32, message = "must be at least 32 bytes") String secret,
@@ -140,6 +141,27 @@ public record AppProperties(
         @AssertTrue(message = "capture-timeout must be longer than max-video-duration")
         public boolean isCaptureTimeoutLongEnough() {
             return captureTimeout == null || maxVideoDuration == null || captureTimeout.compareTo(maxVideoDuration) > 0;
+        }
+    }
+
+    /**
+     * Microphone sessions and clips (docs/protocol/ws-v1.md, Phase 6). Clips are spooled under
+     * {@code <storage.dir>/mic} for {@code mediaRetention}, at most {@code maxRetained} per phone.
+     */
+    public record Mic(
+            @NotNull Duration consentTimeout,
+            @Min(1) int startPerMinute,
+            @Min(1) int capturePerMinute,
+            /* A clip of maxAudioDuration plus its upload has to fit in here. */
+            @NotNull Duration captureTimeout,
+            @NotNull DataSize maxAudioSize,
+            @NotNull Duration maxAudioDuration,
+            @NotNull Duration mediaRetention,
+            @Min(1) int maxRetained) {
+
+        @AssertTrue(message = "capture-timeout must be longer than max-audio-duration")
+        public boolean isCaptureTimeoutLongEnough() {
+            return captureTimeout == null || maxAudioDuration == null || captureTimeout.compareTo(maxAudioDuration) > 0;
         }
     }
 }

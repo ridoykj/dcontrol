@@ -93,7 +93,10 @@ export function CameraPage({ deviceId }: { deviceId: string }) {
       {state.phase === "awaiting_consent" && <Alert>Waiting for someone to accept on the phone…</Alert>}
       {state.phase === "connecting" && <ProgressBar aria-label="Connecting to the phone" isIndeterminate />}
       {live && audio && !state.audio && (
-        <Alert>The phone hasn't allowed dcontrol to use the microphone, so there is no sound.</Alert>
+        <Alert>
+          There is no sound: the phone hasn't allowed dcontrol to use the microphone, or a microphone session is
+          using it.
+        </Alert>
       )}
       {actionError && <Alert tone="error">{actionError}</Alert>}
       <div className="flex flex-wrap items-center gap-2">

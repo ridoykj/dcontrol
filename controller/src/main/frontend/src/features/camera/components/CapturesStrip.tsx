@@ -3,7 +3,8 @@ import { Download } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { errorMessage } from "@/shared/api/problem";
 import { Button } from "@/shared/components/ui/shadcn/Button";
-import { cameraKeys, getCameraMedia, saveBlob } from "../api/cameraApi";
+import { saveBlob } from "@/shared/lib/saveBlob";
+import { cameraKeys, getCameraMedia } from "../api/cameraApi";
 import { type Capture, captureFileName } from "../lib/cameraSession";
 
 function describe(capture: Capture): string {

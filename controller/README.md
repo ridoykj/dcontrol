@@ -24,7 +24,7 @@ The `dev` profile (active by default) starts `compose.yaml` automatically and us
 | http://localhost:8080 | App (built SPA + API) |
 | http://localhost:8025 | Mailpit: verification and reset emails |
 | localhost:5432 | PostgreSQL (`dcontrol` / `dcontrol`) |
-| localhost:3478 (UDP/TCP), 49160–49200/udp | coturn: STUN/TURN for screen sessions |
+| localhost:3478 (UDP/TCP), 40000–40040/udp | coturn: STUN/TURN for screen sessions |
 
 For frontend work with hot reload, run the backend as above, then start Vite and open http://localhost:5173.
 Vite proxies `/api` and `/ws` to :8080.
@@ -45,7 +45,7 @@ The QR code carries `dcontrol.public-base-url`, which has to be reachable **from
 | Real phone on Wi-Fi | `DCONTROL_PUBLIC_BASE_URL=http://<your LAN IP>:8080` (allow port 8080 in your firewall) |
 
 For screen sessions with a real phone, also put `TURN_EXTERNAL_IP=<your LAN IP>` in `controller/.env` (read by
-`docker compose`) and allow UDP 3478 and 49160–49200 in your firewall.
+`docker compose`) and allow UDP 3478 and 40000–40040 in your firewall.
 
 ## Build and test
 
@@ -95,6 +95,11 @@ Other limits live in `application.yaml` and can be overridden like any Spring pr
 | `dcontrol.camera.max-photo-size`, `dcontrol.camera.max-video-size` | Largest photo and clip a phone may upload | `20MB`, `200MB` |
 | `dcontrol.camera.max-video-duration` | Longest clip | `60s` |
 | `dcontrol.camera.media-retention`, `dcontrol.camera.max-retained` | How long captures stay in `<storage.dir>/camera`, and how many per phone | `30m`, `20` |
+| `dcontrol.mic.consent-timeout` | Time for the phone owner to accept a microphone session | `60s` |
+| `dcontrol.mic.start-per-minute`, `dcontrol.mic.capture-per-minute` | Microphone sessions and clips per phone per minute | `6`, `20` |
+| `dcontrol.mic.capture-timeout` | Longest a clip may take, recording plus upload; must exceed `max-audio-duration` | `6m` |
+| `dcontrol.mic.max-audio-size`, `dcontrol.mic.max-audio-duration` | Largest and longest audio clip a phone may upload | `20MB`, `5m` |
+| `dcontrol.mic.media-retention`, `dcontrol.mic.max-retained` | How long clips stay in `<storage.dir>/mic`, and how many per phone | `30m`, `20` |
 
 ## Layout
 

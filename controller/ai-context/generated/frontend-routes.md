@@ -14,6 +14,7 @@
 | `/_authenticated/devices/$deviceId/find` | _authenticated/devices/$deviceId/find.tsx |
 | `/_authenticated/devices/$deviceId/` | _authenticated/devices/$deviceId/index.tsx |
 | `/_authenticated/devices/$deviceId/messages` | _authenticated/devices/$deviceId/messages.tsx |
+| `/_authenticated/devices/$deviceId/mic` | _authenticated/devices/$deviceId/mic.tsx |
 | `/_authenticated/devices/$deviceId/notifications` | _authenticated/devices/$deviceId/notifications.tsx |
 | `/_authenticated/devices/$deviceId` | _authenticated/devices/$deviceId/route.tsx |
 | `/_authenticated/devices/$deviceId/screen` | _authenticated/devices/$deviceId/screen.tsx |

@@ -82,7 +82,7 @@ class WebRtcEngine(
                 it.registerObserver(ControlObserver())
             }
         }
-        addVideo(peerFactory, peer)
+        if (config.source.hasVideo) addVideo(peerFactory, peer)
         if (config.audio) addAudio(peerFactory, peer)
 
         val offer = createOffer(peer)

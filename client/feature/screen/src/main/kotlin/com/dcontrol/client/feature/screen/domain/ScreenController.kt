@@ -19,6 +19,7 @@ import com.dcontrol.client.core.websocket.protocol.ScreenStartRequest
 import com.dcontrol.client.core.websocket.protocol.ScreenStartResult
 import com.dcontrol.client.core.websocket.protocol.ScreenStatePayload
 import com.dcontrol.client.core.websocket.protocol.ScreenStates
+import com.dcontrol.client.core.rtc.MicrophoneLock
 import com.dcontrol.client.core.rtc.RtcConfig
 import com.dcontrol.client.core.rtc.RtcEngineFactory
 import com.dcontrol.client.feature.screen.rtc.ScreenRtcSource
@@ -53,10 +54,14 @@ class ScreenController @Inject constructor(
     private val permissions: RuntimePermissions,
     private val consent: ScreenConsentFlow,
     private val engineFactory: RtcEngineFactory,
+    private val microphone: MicrophoneLock,
     private val scope: ScreenScope,
 ) {
     @Volatile
     private var pending: PendingScreen? = null
+
+    /** The microphone held for the pending request's audio; it passes to the session once consent is given. */
+    private var pendingMic: MicrophoneLock.Hold? = null
 
     @Volatile
     private var session: ScreenSession? = null
@@ -69,9 +74,16 @@ class ScreenController @Inject constructor(
         // A new start replaces any running or pending session; the controller tells the old browser REPLACED.
         session?.stopSilently()
         session = null
-        pending = null
+        clearPending()
 
-        val audio = request.audio && permissions.isGranted(Manifest.permission.RECORD_AUDIO)
+        // Audio needs RECORD_AUDIO and a free microphone; while the remote microphone holds it, start without.
+        val mic = if (request.audio && permissions.isGranted(Manifest.permission.RECORD_AUDIO)) {
+            microphone.tryAcquire(MicrophoneLock.SCREEN)
+        } else {
+            null
+        }
+        val audio = mic != null
+        pendingMic = mic
         val control = request.control && bridge.isBound
         pending = PendingScreen(
             sessionId = request.sessionId,
@@ -104,7 +116,9 @@ class ScreenController @Inject constructor(
     @Synchronized
     fun onProjectionResult(resultData: Intent) {
         val request = pending ?: return
+        val mic = pendingMic
         pending = null
+        pendingMic = null
         val config = RtcConfig(
             sessionId = request.sessionId,
             source = ScreenRtcSource(resultData, ScreenPreset.of(request.quality), request.audio),
@@ -120,7 +134,10 @@ class ScreenController @Inject constructor(
             bridge = bridge,
             frame = ::currentFrame,
             scope = scope.value,
-            onEnded = consent::stopCapture,
+            onEnded = {
+                mic?.release()
+                consent.stopCapture()
+            },
         )
         session = built
         built.begin()
@@ -129,7 +146,7 @@ class ScreenController @Inject constructor(
     @Synchronized
     fun onConsentDenied() {
         val request = pending ?: return
-        pending = null
+        clearPending()
         sendState(request.sessionId, ScreenStates.ENDED, ScreenReasons.DENIED)
     }
 
@@ -145,7 +162,7 @@ class ScreenController @Inject constructor(
         if (sessionId == currentId()) {
             session?.stopSilently()
             session = null
-            pending = null
+            clearPending()
         }
     }
 
@@ -154,7 +171,14 @@ class ScreenController @Inject constructor(
     fun stopFromNotification() {
         session?.stopOnPhone()
         session = null
+        clearPending()
+    }
+
+    /** Drops the pending request and gives back the microphone it held. */
+    private fun clearPending() {
         pending = null
+        pendingMic?.release()
+        pendingMic = null
     }
 
     /** The running session's id once consent was given (pending is cleared then), or the pending request's. */

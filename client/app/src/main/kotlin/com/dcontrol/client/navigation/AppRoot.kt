@@ -19,6 +19,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.dcontrol.client.feature.calllog.ui.CallsAccessCard
 import com.dcontrol.client.feature.camera.ui.CameraShareCard
+import com.dcontrol.client.feature.mic.ui.MicShareCard
 import com.dcontrol.client.feature.clipboard.ui.ClipboardCard
 import com.dcontrol.client.feature.connection.ui.ConnectionDestination
 import com.dcontrol.client.feature.connection.ui.connectionScreen
@@ -85,6 +86,7 @@ private fun AppNavHost(
                 SmsAccessCard()
                 ScreenShareCard()
                 CameraShareCard()
+                MicShareCard()
                 RemoteControlCard()
                 FindPhoneCard()
             },

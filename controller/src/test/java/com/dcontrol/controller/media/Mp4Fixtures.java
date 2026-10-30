@@ -1,24 +1,29 @@
-package com.dcontrol.controller.camera;
+package com.dcontrol.controller.media;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-/** The smallest files the camera spool accepts: a JPEG start, and an MP4 with an {@code mvhd} length. */
-final class Mp4Fixtures {
+/** The smallest files the capture spools accept: a JPEG start, and an MP4 with an {@code mvhd} length. */
+public final class Mp4Fixtures {
 
-    static final byte[] JPEG = {(byte) 0xff, (byte) 0xd8, (byte) 0xff, (byte) 0xe0, 0, 16, 'J', 'F', 'I', 'F', 0};
+    public static final byte[] JPEG = {(byte) 0xff, (byte) 0xd8, (byte) 0xff, (byte) 0xe0, 0, 16, 'J', 'F', 'I', 'F', 0};
 
     private Mp4Fixtures() {
     }
 
     /** {@code ftyp}, an {@code mdat} the reader has to skip, then {@code moov/mvhd} (version 0 or 1). */
-    static byte[] mp4(long durationMs, int version) {
+    public static byte[] mp4(long durationMs, int version) {
+        return mp4(durationMs, version, "isom");
+    }
+
+    /** The same with another major brand, e.g. {@code M4A } for an audio file. */
+    public static byte[] mp4(long durationMs, int version, String brand) {
         long timescale = 90_000;
         long duration = durationMs * timescale / 1000;
         int mvhdBody = version == 1 ? 112 : 100;
         ByteBuffer file = ByteBuffer.allocate(16 + 24 + 8 + 8 + mvhdBody);
         box(file, 16, "ftyp");
-        file.put("isom".getBytes(StandardCharsets.ISO_8859_1)).putInt(0x200);
+        file.put(brand.getBytes(StandardCharsets.ISO_8859_1)).putInt(0x200);
         box(file, 24, "mdat");
         file.put(new byte[16]);
         box(file, 8 + 8 + mvhdBody, "moov");

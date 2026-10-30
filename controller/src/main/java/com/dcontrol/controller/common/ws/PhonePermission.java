@@ -10,7 +10,8 @@ public enum PhonePermission {
     PHONE,
     LOCATION,
     ACCESSIBILITY,
-    CAMERA;
+    CAMERA,
+    MICROPHONE;
 
     /** Parses a value a phone sent; unknown values are dropped. */
     public static Optional<PhonePermission> parse(String value) {

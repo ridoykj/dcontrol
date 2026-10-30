@@ -7,6 +7,7 @@ import com.dcontrol.client.core.accessibility.AccessibilityBridge
 import com.dcontrol.client.core.accessibility.ControlActions
 import com.dcontrol.client.core.accessibility.EditKey
 import com.dcontrol.client.core.accessibility.NavKey
+import com.dcontrol.client.core.rtc.MicrophoneLock
 import com.dcontrol.client.core.telephony.RuntimePermissions
 import com.dcontrol.client.core.websocket.protocol.RtcKinds
 import com.dcontrol.client.core.websocket.protocol.RtcSignal
@@ -30,6 +31,7 @@ class ScreenCommandsTest {
     private val holder = FakeEngineHolder()
     private var granted = emptySet<String>()
     private val permissions = RuntimePermissions { it in granted }
+    private val microphone = MicrophoneLock()
 
     private fun controller(bridge: AccessibilityBridge) = ScreenController(
         context = context,
@@ -38,6 +40,7 @@ class ScreenCommandsTest {
         permissions = permissions,
         consent = consent,
         engineFactory = holder.factory(),
+        microphone = microphone,
         scope = ScreenScope(),
     )
 
@@ -75,6 +78,21 @@ class ScreenCommandsTest {
 
         granted = setOf(Manifest.permission.RECORD_AUDIO)
         assertTrue(controller(AccessibilityBridge()).start(request()).audio)
+    }
+
+    @Test
+    fun `while the remote microphone holds the mic the screen starts without audio`() {
+        granted = setOf(Manifest.permission.RECORD_AUDIO)
+        val mic = microphone.tryAcquire(MicrophoneLock.MIC)!!
+        assertFalse(controller(AccessibilityBridge()).start(request()).audio)
+
+        mic.release()
+        val screen = controller(AccessibilityBridge())
+        assertTrue(screen.start(request()).audio)
+        assertEquals(MicrophoneLock.SCREEN, microphone.owner)
+
+        screen.onConsentDenied()
+        assertNull("a declined request gives the microphone back", microphone.owner)
     }
 
     @Test

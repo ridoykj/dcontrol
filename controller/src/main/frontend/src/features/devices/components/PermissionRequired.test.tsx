@@ -10,7 +10,7 @@ describe("missingPermission", () => {
     expect(missingPermission(new RealtimeError("PERMISSION_REQUIRED", "x", "CALL_LOG"))).toBe("CALL_LOG");
     expect(missingPermission(new RealtimeError("PERMISSION_REQUIRED", "x"))).toBeNull();
     expect(missingPermission(new RealtimeError("PERMISSION_REQUIRED", "x", "CAMERA"))).toBe("CAMERA");
-    expect(missingPermission(new RealtimeError("PERMISSION_REQUIRED", "x", "MICROPHONE"))).toBeNull();
+    expect(missingPermission(new RealtimeError("PERMISSION_REQUIRED", "x", "MICROPHONE"))).toBe("MICROPHONE");
     expect(missingPermission(new RealtimeError("PERMISSION_REQUIRED", "x", "ACCESSIBILITY"))).toBe("ACCESSIBILITY");
     expect(missingPermission(new ApiError(409, { code: "PERMISSION_REQUIRED", permission: "LOCATION" }))).toBe(
       "LOCATION",
@@ -30,6 +30,10 @@ describe("PermissionRequired", () => {
     rerender(<PermissionRequired permission="CAMERA" />);
     expect(screen.getByText("Camera")).toBeInTheDocument();
     expect(screen.getByText(/use the camera/)).toBeInTheDocument();
+
+    rerender(<PermissionRequired permission="MICROPHONE" />);
+    expect(screen.getByText("Microphone")).toBeInTheDocument();
+    expect(screen.getByText(/use the microphone/)).toBeInTheDocument();
 
     rerender(<PermissionRequired permission="SMS" />);
     expect(screen.getByText("Messages")).toBeInTheDocument();

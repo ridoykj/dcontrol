@@ -29,11 +29,12 @@ Contract with the controller: `controller/docs/protocol/ws-v1.md` and `controlle
 | `:core:rtc` | Android library | `RtcEngine`/`RtcEngineFactory`/`RtcConfig` seam with an `RtcSource` (video capturer, size, frame rate, bitrate, optional audio module), `WebRtcEngine`, `GatheringTracker`, `ControlOutbox`, `di/RtcModule` (the one `RtcEngineFactory` binding) |
 | `:feature:screen` | feature | `data/ScreenCommands` (`screen.start`, `rtc.signal`, `screen.stop`), `domain/ScreenController` + `ScreenSession` + `ScreenConsentFlow`, `rtc/ScreenRtcSource` (`ScreenCapturerAndroid` + `AudioPlaybackCapture`), `control/` (parser, router, `PhoneControl`), `service/ScreenConsentActivity`/`ScreenCaptureService`/`ScreenNotifications`, `ui/ScreenShareCard` |
 | `:feature:camera` | feature | `data/CameraCommands` (`camera.start`/`signal`/`stop`/`capture`/`switch`) + `CameraUploader`, `domain/CameraController` + `CameraSession` + `CameraConsentFlow`, `capture/CameraCapture` seam + `CameraXCapture` (Preview + ImageCapture + VideoCapture) + `CameraXVideoCapturer` (CameraX preview → WebRTC), `service/CameraConsentActivity`/`CameraCaptureService`/`CameraNotifications`, `ui/CameraShareCard` |
+| `:feature:mic` | feature | `data/MicCommands` (`mic.start`/`signal`/`stop`/`capture`) + `MicUploader`, `domain/MicController` + `MicSession` + `MicConsentFlow`, `capture/MicSource` (audio-only `RtcSource`, samples callback) + `ClipRecorder` seam + `AacClipRecorder` (PCM → AAC-LC → `.m4a`), `service/MicConsentActivity`/`MicCaptureService`/`MicNotifications`, `ui/MicShareCard` |
 | `:feature:findphone` | feature | `data/FindCommands` (`find.ring`/`find.lock`/`find.locate`), `domain/Ringer` (+ `TonePlayer`/`RingNotifier`), `Locator` (`LocationManagerCompat`), `Locker` (+ `LockNotifier`), `service/RingStopReceiver`, `ui/FindPhoneCard` |
 
 Features never depend on each other; the screen and find-phone features reach the Accessibility service only
 through `:core:accessibility`. Shared types live in `core/*`. `:app` wires the nav graphs together and passes
-the files/notifications/clipboard/contacts/calls/SMS/screen/camera/remote-control/find cards into
+the files/notifications/clipboard/contacts/calls/SMS/screen/camera/microphone/remote-control/find cards into
 `connectionScreen(featureCards = …)`. The connection notification reaches `ClipboardSendActivity` through the
 action string `com.dcontrol.client.action.SEND_CLIPBOARD`.
 
@@ -258,6 +259,23 @@ action string `com.dcontrol.client.action.SEND_CLIPBOARD`.
   - the photos-only fallback;
   - front/back rotation.
 
+## Remote microphone (Phase 6)
+
+- **Protocol** (`Phase6Protocol.kt`, `MessageTypes.MIC_*`, `Permissions.MICROPHONE`): `mic.start`, `mic.capture`
+  (commands), `mic.stop` + `mic.signal` ANSWER (controller → phone), `mic.state` + `mic.signal` OFFER (phone →
+  controller). States and reasons are the camera's.
+- **Audio-only WebRTC**: `RtcSource.hasVideo` (default true); `WebRtcEngine` adds a video track only when it is set,
+  so `MicSource` offers a single audio m-line. `MicSource` builds the standard `JavaAudioDeviceModule` with a samples
+  callback that feeds the clip recorder.
+- **One microphone user**: `MicrophoneLock` in `:core:rtc`. `mic.start` while camera or screen audio holds it →
+  `CONFLICT`; camera or screen started while the mic feature holds it run without audio (`{audio:false}`).
+- **Consent**: without `RECORD_AUDIO` → `PERMISSION_REQUIRED {MICROPHONE}`, nothing shown. Otherwise
+  `MicConsentActivity` opens directly in the foreground, else the `mic_requests` notification opens it. Never
+  automatic. `MicCaptureService` (FGS `microphone`) shows "Microphone shared with …" with Stop.
+- **Clips**: `AacClipRecorder` takes the live PCM while armed, encodes AAC-LC 64 kbit/s with `MediaCodec`, muxes with
+  `MediaMuxer`, times frames by sample count (`ClipTiming`), stops at `durationMs`, and cleans up its temp file.
+  `MicUploader` sends it to `PUT /api/device-api/mic/{mediaId}` (`audio/mp4`); refusals map as for the camera.
+
 ## Credentials, pairing and connection lifecycle
 
 Unchanged from Phase 1: Keystore AES-GCM `CredentialStore`; QR → preview (host + masked email) → claim;
@@ -285,5 +303,6 @@ full-jitter `Backoff`, `4001`/`4003`/`401` → Unpaired, `4009` → wait 60 s.
 | `feature/screen/src/test` | `ControlMessageParserTest` (limits, unknown types, router drop counter), `ScreenSessionTest` (fake `RtcEngine`: offer after gathering, answer, silent stop, `control.available` change), `ScreenCommandsTest` (consent path with/without Accessibility, audio/control flags), `ScreenShareCardTest` |
 | `core/rtc/src/test` | `GatheringTrackerTest`, `ControlOutboxTest` (moved from screen) |
 | `feature/camera/src/test` | `CameraSessionTest` (fake `RtcEngine` + `CameraCapture`: offer, LIVE, silent stop, capture and switch through the seam), `CameraCommandsTest` (Robolectric: consent direct vs notification, `CAMERA`/`RECORD_AUDIO` gating, validation, capture only while live, upload errors), `CameraShareCardTest` |
+| `feature/mic/src/test` | `ClipTimingTest` (sample-count timestamps, duration cut-off), `MicSessionTest` (fake `RtcEngine` + `ClipRecorder`: offer, LIVE, silent stop, one clip at a time, upload and cleanup), `MicCommandsTest` (Robolectric: consent paths, `RECORD_AUDIO` gating, mic lock `CONFLICT`, validation, MockWebServer upload errors), `MicShareCardTest`; `core/rtc` `MicrophoneLockTest`; camera and screen tests for "mic busy → no audio" |
 | `feature/findphone/src/test` | `RingerTest` (max volume, auto-stop, restore), `LocatorTest` (Robolectric `ShadowLocationManager`: disabled, none, field mapping), `LockerTest` (PERMISSION_REQUIRED vs lock + notify), `FindCommandsTest` (ring/lock/locate validation and permission errors), `FindPhoneCardTest` |
 | `feature/pairing`, `feature/connection` | Phase 1 tests |

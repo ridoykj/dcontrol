@@ -15,6 +15,7 @@
 | PUT | `/api/device-api/app-icons/{hash}` | AppIconController#upload |
 | PUT | `/api/device-api/blobs/{uploadId}` | DeviceBlobController#upload |
 | PUT | `/api/device-api/camera/{mediaId}` | CameraMediaController#upload |
+| PUT | `/api/device-api/mic/{mediaId}` | MicMediaController#upload |
 | POST | `/api/device-api/pairings/claim` | DevicePairingController#claim |
 | POST | `/api/device-api/pairings/preview` | DevicePairingController#preview |
 | GET | `/api/device-api/transfers/{id}` | DeviceTransferController#get |
@@ -26,6 +27,7 @@
 | DELETE | `/api/devices/{deviceId}/location` | LocationController#clear |
 | GET | `/api/devices/{deviceId}/location` | LocationController#get |
 | POST | `/api/devices/{deviceId}/location/refresh` | LocationController#refresh |
+| GET | `/api/devices/{deviceId}/mic/media/{mediaId}` | MicMediaController#read |
 | GET | `/api/devices/{deviceId}/transfers` | TransferController#list |
 | POST | `/api/devices/{deviceId}/transfers` | TransferController#create |
 | DELETE | `/api/devices/{id}` | DeviceController#delete |

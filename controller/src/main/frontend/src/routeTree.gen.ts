@@ -27,6 +27,7 @@ import { Route as AuthenticatedDevicesDeviceIdContactsRouteImport } from './rout
 import { Route as AuthenticatedDevicesDeviceIdFilesRouteImport } from './routes/_authenticated/devices/$deviceId/files'
 import { Route as AuthenticatedDevicesDeviceIdFindRouteImport } from './routes/_authenticated/devices/$deviceId/find'
 import { Route as AuthenticatedDevicesDeviceIdMessagesRouteImport } from './routes/_authenticated/devices/$deviceId/messages'
+import { Route as AuthenticatedDevicesDeviceIdMicRouteImport } from './routes/_authenticated/devices/$deviceId/mic'
 import { Route as AuthenticatedDevicesDeviceIdNotificationsRouteImport } from './routes/_authenticated/devices/$deviceId/notifications'
 import { Route as AuthenticatedDevicesDeviceIdScreenRouteImport } from './routes/_authenticated/devices/$deviceId/screen'
 
@@ -130,6 +131,12 @@ const AuthenticatedDevicesDeviceIdMessagesRoute =
     path: '/messages',
     getParentRoute: () => AuthenticatedDevicesDeviceIdRouteRoute,
   } as any)
+const AuthenticatedDevicesDeviceIdMicRoute =
+  AuthenticatedDevicesDeviceIdMicRouteImport.update({
+    id: '/mic',
+    path: '/mic',
+    getParentRoute: () => AuthenticatedDevicesDeviceIdRouteRoute,
+  } as any)
 const AuthenticatedDevicesDeviceIdNotificationsRoute =
   AuthenticatedDevicesDeviceIdNotificationsRouteImport.update({
     id: '/notifications',
@@ -160,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/devices/$deviceId/files': typeof AuthenticatedDevicesDeviceIdFilesRoute
   '/devices/$deviceId/find': typeof AuthenticatedDevicesDeviceIdFindRoute
   '/devices/$deviceId/messages': typeof AuthenticatedDevicesDeviceIdMessagesRoute
+  '/devices/$deviceId/mic': typeof AuthenticatedDevicesDeviceIdMicRoute
   '/devices/$deviceId/notifications': typeof AuthenticatedDevicesDeviceIdNotificationsRoute
   '/devices/$deviceId/screen': typeof AuthenticatedDevicesDeviceIdScreenRoute
   '/devices/$deviceId/': typeof AuthenticatedDevicesDeviceIdIndexRoute
@@ -180,6 +188,7 @@ export interface FileRoutesByTo {
   '/devices/$deviceId/files': typeof AuthenticatedDevicesDeviceIdFilesRoute
   '/devices/$deviceId/find': typeof AuthenticatedDevicesDeviceIdFindRoute
   '/devices/$deviceId/messages': typeof AuthenticatedDevicesDeviceIdMessagesRoute
+  '/devices/$deviceId/mic': typeof AuthenticatedDevicesDeviceIdMicRoute
   '/devices/$deviceId/notifications': typeof AuthenticatedDevicesDeviceIdNotificationsRoute
   '/devices/$deviceId/screen': typeof AuthenticatedDevicesDeviceIdScreenRoute
   '/devices/$deviceId': typeof AuthenticatedDevicesDeviceIdIndexRoute
@@ -203,6 +212,7 @@ export interface FileRoutesById {
   '/_authenticated/devices/$deviceId/files': typeof AuthenticatedDevicesDeviceIdFilesRoute
   '/_authenticated/devices/$deviceId/find': typeof AuthenticatedDevicesDeviceIdFindRoute
   '/_authenticated/devices/$deviceId/messages': typeof AuthenticatedDevicesDeviceIdMessagesRoute
+  '/_authenticated/devices/$deviceId/mic': typeof AuthenticatedDevicesDeviceIdMicRoute
   '/_authenticated/devices/$deviceId/notifications': typeof AuthenticatedDevicesDeviceIdNotificationsRoute
   '/_authenticated/devices/$deviceId/screen': typeof AuthenticatedDevicesDeviceIdScreenRoute
   '/_authenticated/devices/$deviceId/': typeof AuthenticatedDevicesDeviceIdIndexRoute
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/devices/$deviceId/files'
     | '/devices/$deviceId/find'
     | '/devices/$deviceId/messages'
+    | '/devices/$deviceId/mic'
     | '/devices/$deviceId/notifications'
     | '/devices/$deviceId/screen'
     | '/devices/$deviceId/'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/devices/$deviceId/files'
     | '/devices/$deviceId/find'
     | '/devices/$deviceId/messages'
+    | '/devices/$deviceId/mic'
     | '/devices/$deviceId/notifications'
     | '/devices/$deviceId/screen'
     | '/devices/$deviceId'
@@ -268,6 +280,7 @@ export interface FileRouteTypes {
     | '/_authenticated/devices/$deviceId/files'
     | '/_authenticated/devices/$deviceId/find'
     | '/_authenticated/devices/$deviceId/messages'
+    | '/_authenticated/devices/$deviceId/mic'
     | '/_authenticated/devices/$deviceId/notifications'
     | '/_authenticated/devices/$deviceId/screen'
     | '/_authenticated/devices/$deviceId/'
@@ -411,6 +424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDevicesDeviceIdMessagesRouteImport
       parentRoute: typeof AuthenticatedDevicesDeviceIdRouteRoute
     }
+    '/_authenticated/devices/$deviceId/mic': {
+      id: '/_authenticated/devices/$deviceId/mic'
+      path: '/mic'
+      fullPath: '/devices/$deviceId/mic'
+      preLoaderRoute: typeof AuthenticatedDevicesDeviceIdMicRouteImport
+      parentRoute: typeof AuthenticatedDevicesDeviceIdRouteRoute
+    }
     '/_authenticated/devices/$deviceId/notifications': {
       id: '/_authenticated/devices/$deviceId/notifications'
       path: '/notifications'
@@ -436,6 +456,7 @@ interface AuthenticatedDevicesDeviceIdRouteRouteChildren {
   AuthenticatedDevicesDeviceIdFilesRoute: typeof AuthenticatedDevicesDeviceIdFilesRoute
   AuthenticatedDevicesDeviceIdFindRoute: typeof AuthenticatedDevicesDeviceIdFindRoute
   AuthenticatedDevicesDeviceIdMessagesRoute: typeof AuthenticatedDevicesDeviceIdMessagesRoute
+  AuthenticatedDevicesDeviceIdMicRoute: typeof AuthenticatedDevicesDeviceIdMicRoute
   AuthenticatedDevicesDeviceIdNotificationsRoute: typeof AuthenticatedDevicesDeviceIdNotificationsRoute
   AuthenticatedDevicesDeviceIdScreenRoute: typeof AuthenticatedDevicesDeviceIdScreenRoute
   AuthenticatedDevicesDeviceIdIndexRoute: typeof AuthenticatedDevicesDeviceIdIndexRoute
@@ -457,6 +478,7 @@ const AuthenticatedDevicesDeviceIdRouteRouteChildren: AuthenticatedDevicesDevice
       AuthenticatedDevicesDeviceIdFindRoute,
     AuthenticatedDevicesDeviceIdMessagesRoute:
       AuthenticatedDevicesDeviceIdMessagesRoute,
+    AuthenticatedDevicesDeviceIdMicRoute: AuthenticatedDevicesDeviceIdMicRoute,
     AuthenticatedDevicesDeviceIdNotificationsRoute:
       AuthenticatedDevicesDeviceIdNotificationsRoute,
     AuthenticatedDevicesDeviceIdScreenRoute:

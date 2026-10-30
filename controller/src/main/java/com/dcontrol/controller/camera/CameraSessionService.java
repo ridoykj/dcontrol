@@ -2,8 +2,6 @@ package com.dcontrol.controller.camera;
 
 import com.dcontrol.controller.auth.User;
 import com.dcontrol.controller.auth.UserRepository;
-import com.dcontrol.controller.camera.CameraMediaService.Media;
-import com.dcontrol.controller.camera.CameraMediaService.Slot;
 import com.dcontrol.controller.camera.CameraProtocol.CaptureCommand;
 import com.dcontrol.controller.camera.CameraProtocol.CaptureForWeb;
 import com.dcontrol.controller.camera.CameraProtocol.CaptureKind;
@@ -43,6 +41,8 @@ import com.dcontrol.controller.device.DeviceCommandRelay;
 import com.dcontrol.controller.device.DeviceConnectionListener;
 import com.dcontrol.controller.device.DeviceEventHandler;
 import com.dcontrol.controller.device.RelayGuards;
+import com.dcontrol.controller.media.CaptureMediaStore.Media;
+import com.dcontrol.controller.media.CaptureMediaStore.Slot;
 import com.dcontrol.controller.webrtc.IceServers;
 import java.time.Clock;
 import java.time.Duration;
@@ -284,7 +284,7 @@ public class CameraSessionService implements DeviceConnectionListener, BrowserMe
                         return;
                     }
                     webConnection.send(codec.result(CAPTURE_RESULT, requestId, new CaptureForWeb(kept.id(),
-                            kept.kind(), kept.mime(), kept.bytes(), result.width(), result.height(),
+                            command.kind(), kept.mime(), kept.bytes(), result.width(), result.height(),
                             kept.durationMs(), kept.capturedAt())));
                 });
     }

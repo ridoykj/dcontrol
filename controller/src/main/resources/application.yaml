@@ -108,3 +108,12 @@ dcontrol:
     max-video-duration: 60s
     media-retention: 30m
     max-retained: 20
+  mic:
+    consent-timeout: 60s
+    start-per-minute: 6
+    capture-per-minute: 20
+    capture-timeout: 6m
+    max-audio-size: 20MB
+    max-audio-duration: 5m
+    media-retention: 30m
+    max-retained: 20

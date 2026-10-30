@@ -4,6 +4,7 @@ import static com.dcontrol.controller.camera.CameraSessionIntegrationTest.startS
 import static com.dcontrol.controller.camera.CameraSessionIntegrationTest.state;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.dcontrol.controller.media.Mp4Fixtures;
 import com.dcontrol.controller.support.Api;
 import com.dcontrol.controller.support.IntegrationTest;
 import com.dcontrol.controller.support.TestSocket;

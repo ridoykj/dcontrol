@@ -7,6 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.dcontrol.client.core.network.credentials.CredentialStore
 import com.dcontrol.client.core.network.credentials.StoredCredentials
 import com.dcontrol.client.core.network.device.DeviceHttpClient
+import com.dcontrol.client.core.rtc.MicrophoneLock
 import com.dcontrol.client.core.telephony.RuntimePermissions
 import com.dcontrol.client.core.websocket.CommandException
 import com.dcontrol.client.core.websocket.ConnectionState
@@ -50,6 +51,7 @@ class CameraCommandsTest {
     private val holder = FakeEngineHolder()
     private val captures = FakeCaptureFactory()
     private val granted = mutableSetOf(Manifest.permission.CAMERA)
+    private val microphone = MicrophoneLock()
     private val http = DeviceHttpClient(
         OkHttpClient(),
         object : CredentialStore {
@@ -66,6 +68,7 @@ class CameraCommandsTest {
         engineFactory = holder.factory(),
         captureFactory = captures,
         uploader = CameraUploader(http),
+        microphone = microphone,
         scope = CameraScope(),
     )
     private val commands = CameraCommands(codec, controller)
@@ -135,6 +138,33 @@ class CameraCommandsTest {
 
         granted += Manifest.permission.RECORD_AUDIO
         assertEquals("true", start()["audio"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun `while the remote microphone holds the mic the camera starts without audio`() {
+        granted += Manifest.permission.RECORD_AUDIO
+        val mic = microphone.tryAcquire(MicrophoneLock.MIC)!!
+
+        assertEquals("false", start()["audio"]!!.jsonPrimitive.content)
+        assertEquals(false, controller.pendingSession?.audio)
+        assertEquals(MicrophoneLock.MIC, microphone.owner)
+
+        mic.release()
+        assertEquals("true", start(START.replace("\"s1\"", "\"s2\""))["audio"]!!.jsonPrimitive.content)
+        assertEquals(MicrophoneLock.CAMERA, microphone.owner)
+    }
+
+    @Test
+    fun `the camera gives the microphone back when its request or session ends`() {
+        granted += Manifest.permission.RECORD_AUDIO
+        start()
+        controller.onConsentDenied("s1")
+        assertNull("a declined request releases it", microphone.owner)
+
+        liveSession()
+        assertEquals(MicrophoneLock.CAMERA, microphone.owner)
+        runBlocking { commands.stop.handle(event(MessageTypes.CAMERA_STOP, """{"sessionId":"s1"}""")) }
+        assertNull("a stopped session releases it", microphone.owner)
     }
 
     @Test

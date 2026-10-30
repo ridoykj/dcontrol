@@ -20,3 +20,9 @@ dcontrol:
     max-video-size: 256KB
     max-video-duration: 2s
     max-retained: 3
+  mic:
+    capture-per-minute: 4
+    capture-timeout: 3s
+    max-audio-size: 64KB
+    max-audio-duration: 2s
+    max-retained: 3

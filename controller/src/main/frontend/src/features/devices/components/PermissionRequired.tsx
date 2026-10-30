@@ -2,7 +2,15 @@ import { ApiError } from "@/shared/api/problem";
 import { Alert } from "@/shared/components/Alert";
 import { RealtimeError } from "@/shared/ws/client";
 
-export type PhonePermission = "CONTACTS" | "CALL_LOG" | "SMS" | "PHONE" | "LOCATION" | "ACCESSIBILITY" | "CAMERA";
+export type PhonePermission =
+  | "CONTACTS"
+  | "CALL_LOG"
+  | "SMS"
+  | "PHONE"
+  | "LOCATION"
+  | "ACCESSIBILITY"
+  | "CAMERA"
+  | "MICROPHONE";
 
 const cards: Record<PhonePermission, { card: string; what: string; action: string }> = {
   CONTACTS: { card: "Contacts", what: "read and edit contacts", action: "Grant" },
@@ -12,6 +20,7 @@ const cards: Record<PhonePermission, { card: string; what: string; action: strin
   LOCATION: { card: "Find my phone", what: "share its location", action: "Grant" },
   ACCESSIBILITY: { card: "Remote control", what: "control or lock the screen", action: "Turn on" },
   CAMERA: { card: "Camera", what: "use the camera", action: "Grant" },
+  MICROPHONE: { card: "Microphone", what: "use the microphone", action: "Grant" },
 };
 
 /** The phone access a failed relayed command or REST call is missing, or null for any other failure. */

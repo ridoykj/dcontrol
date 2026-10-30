@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mic_requests_channel_name">Microphone share requests</string>
+    <string name="mic_requests_channel_description">Asks you to approve when someone wants to listen to this phone\'s microphone.</string>
+    <string name="mic_capture_channel_name">Microphone sharing</string>
+
+    <string name="mic_request_title">Tap to share your microphone</string>
+    <string name="mic_request_text">%1$s wants to listen to this phone\'s microphone. Tap to choose, or ignore to decline.</string>
+
+    <string name="mic_consent_title">Share your microphone with %1$s?</string>
+    <string name="mic_consent_text">%1$s will hear this phone\'s microphone live and can record short audio clips until you tap Stop.</string>
+    <string name="mic_consent_allow">Share microphone</string>
+    <string name="mic_consent_deny">Don\'t share</string>
+
+    <string name="mic_capture_title">Microphone is being shared</string>
+    <string name="mic_capture_text">Shared with %1$s</string>
+    <string name="mic_capture_stop">Stop</string>
+
+    <string name="mic_share_title">Remote microphone</string>
+    <string name="mic_share_consent">Each session needs you to approve it on the phone; the microphone can\'t be opened unattended. While it is shared a notification with Stop stays visible.</string>
+    <string name="mic_share_granted">Microphone access is granted.</string>
+    <string name="mic_share_missing">Allow microphone access so the web Microphone tab can ask to use it.</string>
+    <string name="mic_share_grant">Grant</string>
+    <string name="mic_share_open_settings">Open settings</string>
+</resources>

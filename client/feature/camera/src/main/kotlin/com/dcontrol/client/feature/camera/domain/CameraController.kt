@@ -2,6 +2,7 @@ package com.dcontrol.client.feature.camera.domain
 
 import android.Manifest
 import androidx.lifecycle.LifecycleOwner
+import com.dcontrol.client.core.rtc.MicrophoneLock
 import com.dcontrol.client.core.rtc.RtcEngineFactory
 import com.dcontrol.client.core.telephony.RuntimePermissions
 import com.dcontrol.client.core.websocket.CommandException
@@ -53,10 +54,14 @@ class CameraController @Inject constructor(
     private val engineFactory: RtcEngineFactory,
     private val captureFactory: CameraCaptureFactory,
     private val uploader: MediaUploader,
+    private val microphone: MicrophoneLock,
     private val scope: CameraScope,
 ) {
     @Volatile
     private var pending: PendingCamera? = null
+
+    /** The microphone held for the pending request's audio; it passes to the session once the owner approves. */
+    private var pendingMic: MicrophoneLock.Hold? = null
 
     @Volatile
     private var session: CameraSession? = null
@@ -77,9 +82,16 @@ class CameraController @Inject constructor(
         // A new start replaces any running or pending session; the controller tells the old browser REPLACED.
         session?.stopSilently()
         session = null
-        pending = null
+        clearPending()
 
-        val audio = request.audio && permissions.isGranted(Manifest.permission.RECORD_AUDIO)
+        // Audio needs RECORD_AUDIO and a free microphone; while the remote microphone holds it, start without.
+        val mic = if (request.audio && permissions.isGranted(Manifest.permission.RECORD_AUDIO)) {
+            microphone.tryAcquire(MicrophoneLock.CAMERA)
+        } else {
+            null
+        }
+        val audio = mic != null
+        pendingMic = mic
         pending = PendingCamera(
             sessionId = request.sessionId,
             viewer = request.viewer,
@@ -94,7 +106,7 @@ class CameraController @Inject constructor(
                 consent.postRequest(request.sessionId, request.viewer)
             }
         } catch (e: Exception) {
-            pending = null
+            clearPending()
             throw CommandException(ErrorCodes.INTERNAL, "The consent prompt could not be shown: ${e.message ?: e.javaClass.simpleName}")
         }
         // The camera.start result must reach the browser before the first camera.state. The result is sent when
@@ -113,7 +125,9 @@ class CameraController @Inject constructor(
     @Synchronized
     fun onConsentGranted(sessionId: String, owner: LifecycleOwner): Boolean {
         val request = pending?.takeIf { it.sessionId == sessionId } ?: return false
+        val mic = pendingMic
         pending = null
+        pendingMic = null
         lateinit var built: CameraSession
         built = CameraSession(
             sessionId = request.sessionId,
@@ -127,6 +141,7 @@ class CameraController @Inject constructor(
             scope = scope.value,
             onEnded = {
                 synchronized(this@CameraController) { if (session === built) session = null }
+                mic?.release()
                 consent.stopCapture()
             },
         )
@@ -138,7 +153,7 @@ class CameraController @Inject constructor(
     @Synchronized
     fun onConsentDenied(sessionId: String) {
         val request = pending?.takeIf { it.sessionId == sessionId } ?: return
-        pending = null
+        clearPending()
         sendPendingState(request, CameraStates.ENDED, CameraReasons.DENIED)
     }
 
@@ -146,7 +161,7 @@ class CameraController @Inject constructor(
     @Synchronized
     fun onCaptureFailed(sessionId: String) {
         val request = pending?.takeIf { it.sessionId == sessionId } ?: return
-        pending = null
+        clearPending()
         sendPendingState(request, CameraStates.ENDED, CameraReasons.ERROR)
     }
 
@@ -159,7 +174,7 @@ class CameraController @Inject constructor(
     @Synchronized
     fun onStop(sessionId: String) {
         if (pending?.sessionId == sessionId) {
-            pending = null
+            clearPending()
             consent.cancelRequest()
         }
         active(sessionId)?.let {
@@ -201,12 +216,19 @@ class CameraController @Inject constructor(
     @Synchronized
     private fun onOffline() {
         if (pending != null) {
-            pending = null
+            clearPending()
             consent.cancelRequest()
         }
         val running = session ?: return
         session = null
         running.stopSilently()
+    }
+
+    /** Drops the pending request and gives back the microphone it held. */
+    private fun clearPending() {
+        pending = null
+        pendingMic?.release()
+        pendingMic = null
     }
 
     @Synchronized

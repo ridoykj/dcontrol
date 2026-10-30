@@ -1,4 +1,4 @@
-package com.dcontrol.controller.camera;
+package com.dcontrol.controller.media;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

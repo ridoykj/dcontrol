@@ -224,6 +224,40 @@ prompt is the gate, and the feature follows the screen-sharing transparency rule
 while a clip with sound opens a second `AudioRecord`, so on some devices one of them may get silence (to be
 checked on hardware); the live view is not mirrored for the front camera.
 
+## Remote microphone (Phase 6)
+
+The web Microphone tab listens to the phone's microphone live and can record short audio clips. It is the camera
+session (Phase 5) without video: the phone offers one audio m-line over `mic.signal`, with no data channel. Consent
+is identical to the camera.
+
+- **Consent every session, never auto-accepted.** `mic.start` asks "Share your microphone with <viewer>?" in
+  `MicConsentActivity`, opened directly when the app is visible or via the high-importance `mic_requests`
+  notification otherwise. Dismissing or leaving the prompt declines (`DENIED`). Nothing touches the microphone
+  before the owner taps **Share microphone**.
+- **The grant.** `RECORD_AUDIO` is required; without it `mic.start` answers `PERMISSION_REQUIRED` (`MICROPHONE`)
+  and the phone shows nothing. The Microphone card on the status screen grants it.
+- **Visible while it runs.** `MicCaptureService` (FGS type `microphone`) starts from the approval; its ongoing
+  "Microphone shared with <viewer>" notification carries **Stop** and the system mic indicator stays lit. Stop,
+  the browser closing the tab (`mic.stop`), or the phone going offline ends the session.
+- **One microphone consumer.** Clips are encoded from the same samples WebRTC captures: a
+  `JavaAudioDeviceModule` samples-ready callback feeds `AacClipRecorder` (PCM → MediaCodec AAC-LC 64 kbps →
+  MediaMuxer `.m4a`), so live audio keeps playing while a clip records. Presentation times and the clip's end come
+  from the sample count (`ClipTiming`), not the wall clock. The clip is uploaded with
+  `PUT /api/device-api/mic/{mediaId}` (`audio/mp4`), deleted, and only then `mic.capture` is answered. One clip
+  records at a time (`CONFLICT` otherwise).
+- **The microphone has one user** (`MicrophoneLock`, in `:core:rtc`). `mic.start` fails with `CONFLICT` while a
+  camera or screen session holds the microphone; a `camera.start`/`screen.start` with audio while the microphone
+  session runs starts without audio (`{audio:false}`).
+
+| Feature | Permission / component | Kind |
+|---|---|---|
+| Live audio, clips | `RECORD_AUDIO` | runtime (Microphone card) |
+| Capture service | `FOREGROUND_SERVICE_MICROPHONE`, `MicCaptureService` type `microphone` | normal + FGS type |
+| Consent prompt | `POST_NOTIFICATIONS` (Phase 1) | runtime; new `mic_requests` channel |
+
+**Known limits:** the AAC encoder and the audio-only WebRTC offer are checked on the emulator, not in unit tests;
+the owner must approve each session on the phone.
+
 ## Modules
 
 | Module | Contents |
@@ -247,9 +281,10 @@ checked on hardware); the live view is not mirrored for the front camera.
 | `:feature:sms` | `sms.threads` / `sms.messages` (`SmsStore`), `sms.send` with sent/delivered tracking, `sms.received` / `sms.changed` watcher, Messages card |
 | `:core:accessibility` | `AccessibilityBridge` (the service ⇄ feature seam), `ControlActions`, accessibility-settings helpers. Features depend on this, never on each other |
 | `:feature:remotecontrol` | `ControlAccessibilityService`, `GestureStreamer` (normalized events → gesture paths), `TextInjector` (`ACTION_SET_TEXT`), Remote control card |
-| `:core:rtc` | The shared WebRTC plumbing: `RtcEngine` / `RtcEngineFactory` seam, `RtcSource` (what a feature streams), `WebRtcEngine`, `GatheringTracker`, `ControlOutbox` |
+| `:core:rtc` | The shared WebRTC plumbing: `RtcEngine` / `RtcEngineFactory` seam, `RtcSource` (video optional), `WebRtcEngine`, `GatheringTracker`, `ControlOutbox`, `MicrophoneLock` (one microphone user) |
 | `:feature:screen` | `screen.*` / `rtc.signal`, `ScreenConsentActivity`, `ScreenCaptureService` (FGS mediaProjection + microphone), `ScreenSession`, `ScreenRtcSource` (MediaProjection + playback audio), the `control` data channel, Screen share card |
 | `:feature:camera` | `camera.*`, `CameraConsentActivity`, `CameraCaptureService` (FGS camera + microphone), `CameraSession` behind the `CameraCapture` seam, `CameraXCapture` + the CameraX → WebRTC bridge, `CameraUploader`, Camera card |
+| `:feature:mic` | `mic.*`, `MicConsentActivity`, `MicCaptureService` (FGS microphone), `MicSession` behind the `MicCapture` seam, `MicSource` + `AacClipRecorder` (`ClipTiming`), `MicUploader`, Microphone card |
 | `:feature:findphone` | `find.ring` / `find.lock` / `find.locate`, `Ringer`, `Locator` (`LocationManagerCompat`), `Locker` (lock + public notification), Find my phone card |
 
 Build logic lives in `build-logic/` (convention plugins `dcontrol.android.*`, `dcontrol.jvm.library`), and

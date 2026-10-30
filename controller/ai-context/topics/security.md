@@ -59,6 +59,17 @@ the JWT decoder.
       database, and deleted when the phone is unpaired;
     - the browser gets them with `nosniff` and `private`, and only for its own phones. The CSP allows `blob:` only
       for `img-src` and `media-src`, so the page can show captures it already fetched.
+- **Microphone sessions (Phase 6).**
+  - The same consent contract as the camera: the app's own prompt on every session, never automatic; an FGS of
+    type `microphone` with an ongoing notification and Stop keeps the mic indicator on. Without `RECORD_AUDIO` the
+    phone answers `PERMISSION_REQUIRED` (`MICROPHONE`) and shows nothing. No hidden mode.
+  - Sessions are bound to one browser socket; `mic.start` (6/min) and `mic.capture` (20/min) are limited per phone
+    and audited without media, SDP or ICE credentials.
+  - Clips go through the same `CaptureMediaStore` as camera captures (single-use slot bound to the phone, MP4 `ftyp`
+    and `mvhd` length checked, 20 MiB / 5 min caps, 30 min on disk, deleted on unpair), spooled in
+    `<storage.dir>/mic`.
+  - The phone gives the microphone to one session at a time, so a camera or screen session can't silently share it
+    with a microphone session.
 - **TURN.**
   - Credentials are short-lived HMACs of `<expiry>:<user id>` (coturn `use-auth-secret`), one set per socket.
   - The `{host}` placeholder only accepts a plain host name or IP literal from the `Host` header. Anything else

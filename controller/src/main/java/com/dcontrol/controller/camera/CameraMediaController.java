@@ -1,10 +1,10 @@
 package com.dcontrol.controller.camera;
 
-import com.dcontrol.controller.camera.CameraMediaService.Media;
 import com.dcontrol.controller.common.error.ApiException;
 import com.dcontrol.controller.device.DeviceApiAuth;
 import com.dcontrol.controller.device.DeviceApiAuth.DeviceCaller;
 import com.dcontrol.controller.device.DeviceService;
+import com.dcontrol.controller.media.CaptureMediaStore.Media;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.time.Duration;

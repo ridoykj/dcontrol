@@ -32,8 +32,10 @@ services:
       - -n
       - --log-file=stdout
       - --listening-port=3478
-      - --min-port=49160
-      - --max-port=49200
+      # Below Windows' dynamic range (49152+): Hyper-V/WinNAT reserve random blocks there on each boot, and
+      # Docker can't publish a reserved port ("access permissions" error).
+      - --min-port=40000
+      - --max-port=40040
       - --use-auth-secret
       - --static-auth-secret=${DCONTROL_TURN_SECRET:-dev-turn-secret}
       - --realm=dcontrol
@@ -48,7 +50,7 @@ services:
     ports:
       - "3478:3478/udp"
       - "3478:3478/tcp"
-      - "49160-49200:49160-49200/udp"
+      - "40000-40040:40000-40040/udp"
 
 volumes:
   postgres-data:

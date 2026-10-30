@@ -8,7 +8,8 @@ import org.webrtc.audio.JavaAudioDeviceModule
 
 /**
  * What a feature streams: the video capturer and its format, plus the audio module. Screen mirroring wraps
- * MediaProjection here, the remote camera wraps CameraX; [WebRtcEngine] stays the same for both.
+ * MediaProjection here, the remote camera wraps CameraX, the remote microphone streams audio only;
+ * [WebRtcEngine] stays the same for all of them.
  */
 interface RtcSource {
     /** Names the track and stream (`dcontrol-<label>`) and the capture thread. */
@@ -19,11 +20,15 @@ interface RtcSource {
     /** The encoder's bitrate cap, or null to leave it to WebRTC. */
     val maxBitrateBps: Int?
 
-    /** Called once per engine; [onStopped] reports a capture the system ended on its own. */
-    fun createVideoCapturer(context: Context, onStopped: () -> Unit): VideoCapturer
+    /** Whether the engine adds a video track. Without one the offer has a single audio m-line. */
+    val hasVideo: Boolean get() = true
 
-    /** The size asked of the capturer in `startCapture`. */
-    fun videoSize(context: Context): Size
+    /** Called once per engine, only when [hasVideo]; [onStopped] reports a capture the system ended on its own. */
+    fun createVideoCapturer(context: Context, onStopped: () -> Unit): VideoCapturer =
+        error("$label has no video")
+
+    /** The size asked of the capturer in `startCapture`, only when [hasVideo]. */
+    fun videoSize(context: Context): Size = error("$label has no video")
 
     /** The audio module, or null for WebRTC's standard microphone module. */
     fun createAudioModule(context: Context): JavaAudioDeviceModule?
