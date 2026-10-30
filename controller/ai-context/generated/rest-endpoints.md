@@ -14,6 +14,7 @@
 | POST | `/api/auth/verify-email` | AuthController#verifyEmail |
 | PUT | `/api/device-api/app-icons/{hash}` | AppIconController#upload |
 | PUT | `/api/device-api/blobs/{uploadId}` | DeviceBlobController#upload |
+| PUT | `/api/device-api/camera/{mediaId}` | CameraMediaController#upload |
 | POST | `/api/device-api/pairings/claim` | DevicePairingController#claim |
 | POST | `/api/device-api/pairings/preview` | DevicePairingController#preview |
 | GET | `/api/device-api/transfers/{id}` | DeviceTransferController#get |
@@ -21,6 +22,7 @@
 | PUT | `/api/device-api/transfers/{id}/content` | DeviceTransferController#upload |
 | GET | `/api/devices` | DeviceController#list |
 | GET | `/api/devices/{deviceId}/app-icons/{hash}` | AppIconController#exists |
+| GET | `/api/devices/{deviceId}/camera/media/{mediaId}` | CameraMediaController#read |
 | DELETE | `/api/devices/{deviceId}/location` | LocationController#clear |
 | GET | `/api/devices/{deviceId}/location` | LocationController#get |
 | POST | `/api/devices/{deviceId}/location/refresh` | LocationController#refresh |

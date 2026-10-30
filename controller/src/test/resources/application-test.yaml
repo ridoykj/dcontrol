@@ -13,3 +13,10 @@ dcontrol:
     dir: ${java.io.tmpdir}/dcontrol-test/${random.uuid}
   webrtc:
     turn-secret: test-turn-secret
+  camera:
+    capture-per-minute: 4
+    capture-timeout: 3s
+    max-photo-size: 64KB
+    max-video-size: 256KB
+    max-video-duration: 2s
+    max-retained: 3

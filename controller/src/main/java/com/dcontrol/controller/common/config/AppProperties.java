@@ -30,7 +30,8 @@ public record AppProperties(
         @NotNull @Valid Calls calls,
         @NotNull @Valid Blobs blobs,
         @NotNull @Valid Webrtc webrtc,
-        @NotNull @Valid Find find) {
+        @NotNull @Valid Find find,
+        @NotNull @Valid Camera camera) {
 
     public record Jwt(
             @NotBlank @Size(min = 32, message = "must be at least 32 bytes") String secret,
@@ -118,5 +119,27 @@ public record AppProperties(
 
     /** {@code find.ring} and {@code find.lock} relays per device and minute. */
     public record Find(@Min(1) int ringPerMinute, @Min(1) int lockPerMinute) {
+    }
+
+    /**
+     * Camera sessions and captures (docs/protocol/ws-v1.md, Phase 5). Captures are spooled under
+     * {@code <storage.dir>/camera} for {@code mediaRetention}, at most {@code maxRetained} per phone.
+     */
+    public record Camera(
+            @NotNull Duration consentTimeout,
+            @Min(1) int startPerMinute,
+            @Min(1) int capturePerMinute,
+            /* A clip of maxVideoDuration plus its upload has to fit in here. */
+            @NotNull Duration captureTimeout,
+            @NotNull DataSize maxPhotoSize,
+            @NotNull DataSize maxVideoSize,
+            @NotNull Duration maxVideoDuration,
+            @NotNull Duration mediaRetention,
+            @Min(1) int maxRetained) {
+
+        @AssertTrue(message = "capture-timeout must be longer than max-video-duration")
+        public boolean isCaptureTimeoutLongEnough() {
+            return captureTimeout == null || maxVideoDuration == null || captureTimeout.compareTo(maxVideoDuration) > 0;
+        }
     }
 }

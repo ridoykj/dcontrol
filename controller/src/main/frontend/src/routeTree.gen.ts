@@ -21,6 +21,7 @@ import { Route as AuthenticatedDevicesDeviceIdRouteRouteImport } from './routes/
 import { Route as AuthenticatedDevicesPairRouteImport } from './routes/_authenticated/devices/pair'
 import { Route as AuthenticatedDevicesDeviceIdIndexRouteImport } from './routes/_authenticated/devices/$deviceId/index'
 import { Route as AuthenticatedDevicesDeviceIdCallsRouteImport } from './routes/_authenticated/devices/$deviceId/calls'
+import { Route as AuthenticatedDevicesDeviceIdCameraRouteImport } from './routes/_authenticated/devices/$deviceId/camera'
 import { Route as AuthenticatedDevicesDeviceIdClipboardRouteImport } from './routes/_authenticated/devices/$deviceId/clipboard'
 import { Route as AuthenticatedDevicesDeviceIdContactsRouteImport } from './routes/_authenticated/devices/$deviceId/contacts'
 import { Route as AuthenticatedDevicesDeviceIdFilesRouteImport } from './routes/_authenticated/devices/$deviceId/files'
@@ -93,6 +94,12 @@ const AuthenticatedDevicesDeviceIdCallsRoute =
     path: '/calls',
     getParentRoute: () => AuthenticatedDevicesDeviceIdRouteRoute,
   } as any)
+const AuthenticatedDevicesDeviceIdCameraRoute =
+  AuthenticatedDevicesDeviceIdCameraRouteImport.update({
+    id: '/camera',
+    path: '/camera',
+    getParentRoute: () => AuthenticatedDevicesDeviceIdRouteRoute,
+  } as any)
 const AuthenticatedDevicesDeviceIdClipboardRoute =
   AuthenticatedDevicesDeviceIdClipboardRouteImport.update({
     id: '/clipboard',
@@ -147,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/devices/pair': typeof AuthenticatedDevicesPairRoute
   '/devices/': typeof AuthenticatedDevicesIndexRoute
   '/devices/$deviceId/calls': typeof AuthenticatedDevicesDeviceIdCallsRoute
+  '/devices/$deviceId/camera': typeof AuthenticatedDevicesDeviceIdCameraRoute
   '/devices/$deviceId/clipboard': typeof AuthenticatedDevicesDeviceIdClipboardRoute
   '/devices/$deviceId/contacts': typeof AuthenticatedDevicesDeviceIdContactsRoute
   '/devices/$deviceId/files': typeof AuthenticatedDevicesDeviceIdFilesRoute
@@ -166,6 +174,7 @@ export interface FileRoutesByTo {
   '/devices/pair': typeof AuthenticatedDevicesPairRoute
   '/devices': typeof AuthenticatedDevicesIndexRoute
   '/devices/$deviceId/calls': typeof AuthenticatedDevicesDeviceIdCallsRoute
+  '/devices/$deviceId/camera': typeof AuthenticatedDevicesDeviceIdCameraRoute
   '/devices/$deviceId/clipboard': typeof AuthenticatedDevicesDeviceIdClipboardRoute
   '/devices/$deviceId/contacts': typeof AuthenticatedDevicesDeviceIdContactsRoute
   '/devices/$deviceId/files': typeof AuthenticatedDevicesDeviceIdFilesRoute
@@ -188,6 +197,7 @@ export interface FileRoutesById {
   '/_authenticated/devices/pair': typeof AuthenticatedDevicesPairRoute
   '/_authenticated/devices/': typeof AuthenticatedDevicesIndexRoute
   '/_authenticated/devices/$deviceId/calls': typeof AuthenticatedDevicesDeviceIdCallsRoute
+  '/_authenticated/devices/$deviceId/camera': typeof AuthenticatedDevicesDeviceIdCameraRoute
   '/_authenticated/devices/$deviceId/clipboard': typeof AuthenticatedDevicesDeviceIdClipboardRoute
   '/_authenticated/devices/$deviceId/contacts': typeof AuthenticatedDevicesDeviceIdContactsRoute
   '/_authenticated/devices/$deviceId/files': typeof AuthenticatedDevicesDeviceIdFilesRoute
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/devices/pair'
     | '/devices/'
     | '/devices/$deviceId/calls'
+    | '/devices/$deviceId/camera'
     | '/devices/$deviceId/clipboard'
     | '/devices/$deviceId/contacts'
     | '/devices/$deviceId/files'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/devices/pair'
     | '/devices'
     | '/devices/$deviceId/calls'
+    | '/devices/$deviceId/camera'
     | '/devices/$deviceId/clipboard'
     | '/devices/$deviceId/contacts'
     | '/devices/$deviceId/files'
@@ -250,6 +262,7 @@ export interface FileRouteTypes {
     | '/_authenticated/devices/pair'
     | '/_authenticated/devices/'
     | '/_authenticated/devices/$deviceId/calls'
+    | '/_authenticated/devices/$deviceId/camera'
     | '/_authenticated/devices/$deviceId/clipboard'
     | '/_authenticated/devices/$deviceId/contacts'
     | '/_authenticated/devices/$deviceId/files'
@@ -356,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDevicesDeviceIdCallsRouteImport
       parentRoute: typeof AuthenticatedDevicesDeviceIdRouteRoute
     }
+    '/_authenticated/devices/$deviceId/camera': {
+      id: '/_authenticated/devices/$deviceId/camera'
+      path: '/camera'
+      fullPath: '/devices/$deviceId/camera'
+      preLoaderRoute: typeof AuthenticatedDevicesDeviceIdCameraRouteImport
+      parentRoute: typeof AuthenticatedDevicesDeviceIdRouteRoute
+    }
     '/_authenticated/devices/$deviceId/clipboard': {
       id: '/_authenticated/devices/$deviceId/clipboard'
       path: '/clipboard'
@@ -410,6 +430,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedDevicesDeviceIdRouteRouteChildren {
   AuthenticatedDevicesDeviceIdCallsRoute: typeof AuthenticatedDevicesDeviceIdCallsRoute
+  AuthenticatedDevicesDeviceIdCameraRoute: typeof AuthenticatedDevicesDeviceIdCameraRoute
   AuthenticatedDevicesDeviceIdClipboardRoute: typeof AuthenticatedDevicesDeviceIdClipboardRoute
   AuthenticatedDevicesDeviceIdContactsRoute: typeof AuthenticatedDevicesDeviceIdContactsRoute
   AuthenticatedDevicesDeviceIdFilesRoute: typeof AuthenticatedDevicesDeviceIdFilesRoute
@@ -424,6 +445,8 @@ const AuthenticatedDevicesDeviceIdRouteRouteChildren: AuthenticatedDevicesDevice
   {
     AuthenticatedDevicesDeviceIdCallsRoute:
       AuthenticatedDevicesDeviceIdCallsRoute,
+    AuthenticatedDevicesDeviceIdCameraRoute:
+      AuthenticatedDevicesDeviceIdCameraRoute,
     AuthenticatedDevicesDeviceIdClipboardRoute:
       AuthenticatedDevicesDeviceIdClipboardRoute,
     AuthenticatedDevicesDeviceIdContactsRoute:

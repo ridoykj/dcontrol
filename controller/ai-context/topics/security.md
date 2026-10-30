@@ -42,6 +42,23 @@ the JWT decoder.
   - Android requires someone to tap Start on the phone for every session. dcontrol never auto-clicks the consent
     dialog with its Accessibility service.
   - SDP and ICE credentials are never logged.
+- **Camera sessions (Phase 5).**
+  - The camera has no mandatory system consent dialog the way MediaProjection does, so the app's own prompt is the
+    only gate. The phone owner accepts every session on the phone, and it is never automatic. The phone shows an
+    ongoing notification with Stop for the whole session, and the FGS type `camera` (plus `microphone` with audio)
+    keeps the system privacy indicators on. Without the `CAMERA` grant the phone answers `PERMISSION_REQUIRED` and
+    shows nothing. There is no hidden mode.
+  - Sessions are bound to one browser socket, like screen sessions; capture and switch commands follow the same
+    ownership rules.
+  - `camera.start` (6/min) and `camera.capture` (20/min) are limited per phone and audited (type, device, user).
+    Audit lines never contain media, SDP or ICE credentials.
+  - Captures go into `CameraMediaService`:
+    - each upload slot is single use and bound to the phone that was asked;
+    - the type comes from the magic bytes (JPEG `FF D8 FF`, MP4 `ftyp`), and a clip's length from its `mvhd` box;
+    - captures are capped in size and length, kept on disk for 30 min (at most 20 per phone), never in the
+      database, and deleted when the phone is unpaired;
+    - the browser gets them with `nosniff` and `private`, and only for its own phones. The CSP allows `blob:` only
+      for `img-src` and `media-src`, so the page can show captures it already fetched.
 - **TURN.**
   - Credentials are short-lived HMACs of `<expiry>:<user id>` (coturn `use-auth-secret`), one set per socket.
   - The `{host}` placeholder only accepts a plain host name or IP literal from the `Host` header. Anything else

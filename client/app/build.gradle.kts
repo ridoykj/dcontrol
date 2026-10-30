@@ -40,6 +40,7 @@ dependencies {
     implementation(project(":feature:remotecontrol"))
     implementation(project(":feature:screen"))
     implementation(project(":feature:findphone"))
+    implementation(project(":feature:camera"))
     implementation(project(":core:accessibility"))
     implementation(project(":core:telephony"))
     implementation(project(":core:storage"))

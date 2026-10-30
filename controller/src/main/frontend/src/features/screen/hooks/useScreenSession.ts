@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { relayErrorMessage } from "@/features/devices/components/relayErrorMessage";
+import { gatheringComplete, noStats, readStats, type RtcStats, toRtcIceServers } from "@/shared/rtc/peer";
 import type { Envelope } from "@/shared/ws/client";
 import { useRealtime } from "@/shared/ws/RealtimeProvider";
 import { type ControlMessage, phoneMessageSchema } from "../lib/controlMessages";
@@ -12,57 +13,10 @@ import {
   startResultSchema,
 } from "../lib/screenSession";
 
-const GATHERING_TIMEOUT_MS = 4000;
 const STATS_INTERVAL_MS = 2000;
 
 export type StartOptions = { quality: Quality; audio: boolean; control: boolean };
-export type ScreenStats = { fps: number | null; kbps: number | null; route: "direct" | "relay" | null };
-
-/** Resolves once ICE gathering is complete (non-trickle signaling), or after 4 s with what was gathered. */
-function gatheringComplete(pc: RTCPeerConnection): Promise<void> {
-  if (pc.iceGatheringState === "complete") return Promise.resolve();
-  return new Promise((resolve) => {
-    const timer = setTimeout(done, GATHERING_TIMEOUT_MS);
-    function done() {
-      clearTimeout(timer);
-      pc.removeEventListener("icegatheringstatechange", check);
-      resolve();
-    }
-    function check() {
-      if (pc.iceGatheringState === "complete") done();
-    }
-    pc.addEventListener("icegatheringstatechange", check);
-  });
-}
-
-async function readStats(pc: RTCPeerConnection, previous: { bytes: number; at: number } | null) {
-  const report = await pc.getStats();
-  let fps: number | null = null;
-  let bytes = 0;
-  let pairId: string | null = null;
-  const candidates = new Map<string, string>();
-  report.forEach((entry: Record<string, unknown>) => {
-    if (entry.type === "inbound-rtp" && entry.kind === "video") {
-      fps = typeof entry.framesPerSecond === "number" ? entry.framesPerSecond : fps;
-    }
-    if (entry.type === "inbound-rtp" && typeof entry.bytesReceived === "number") bytes += entry.bytesReceived;
-    if (entry.type === "transport" && typeof entry.selectedCandidatePairId === "string") {
-      pairId = entry.selectedCandidatePairId;
-    }
-    if (entry.type === "local-candidate" && typeof entry.id === "string" && typeof entry.candidateType === "string") {
-      candidates.set(entry.id, entry.candidateType);
-    }
-  });
-  let route: ScreenStats["route"] = null;
-  if (pairId) {
-    const pair = report.get(pairId) as { localCandidateId?: string } | undefined;
-    const type = pair?.localCandidateId ? candidates.get(pair.localCandidateId) : undefined;
-    if (type) route = type === "relay" ? "relay" : "direct";
-  }
-  const at = performance.now();
-  const kbps = previous && at > previous.at ? Math.round(((bytes - previous.bytes) * 8) / (at - previous.at)) : null;
-  return { stats: { fps, kbps, route } satisfies ScreenStats, sample: { bytes, at } };
-}
+export type ScreenStats = RtcStats;
 
 /**
  * One screen session with a phone: asks the controller to start it, answers the phone's WebRTC offer and keeps
@@ -72,7 +26,7 @@ export function useScreenSession(deviceId: string) {
   const { client } = useRealtime();
   const [state, dispatch] = useReducer(screenReducer, initialScreenState);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [stats, setStats] = useState<ScreenStats>({ fps: null, kbps: null, route: null });
+  const [stats, setStats] = useState<ScreenStats>(noStats);
   const session = useRef<{ id: string; iceServers: RTCIceServer[]; control: boolean } | null>(null);
   const requesting = useRef(false);
   const early = useRef<Envelope[]>([]);
@@ -86,7 +40,7 @@ export function useScreenSession(deviceId: string) {
     pc.current = null;
     session.current = null;
     setStream(null);
-    setStats({ fps: null, kbps: null, route: null });
+    setStats(noStats);
   }, []);
 
   const answerOffer = useCallback(
@@ -191,11 +145,7 @@ export function useScreenSession(deviceId: string) {
           session.current = {
             id: result.sessionId,
             control: result.control && options.control,
-            iceServers: result.iceServers.map((server) => ({
-              urls: server.urls,
-              ...(server.username ? { username: server.username } : {}),
-              ...(server.credential ? { credential: server.credential } : {}),
-            })),
+            iceServers: toRtcIceServers(result.iceServers),
           };
           dispatch({ type: "started", result: { ...result, control: session.current.control } });
           const queued = early.current;

@@ -15,6 +15,7 @@ import com.dcontrol.controller.common.ws.ProtocolException;
 import com.dcontrol.controller.common.ws.RelayException;
 import com.dcontrol.controller.common.ws.RelayedCommand;
 import com.dcontrol.controller.common.ws.WsConnection;
+import java.time.Duration;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
@@ -103,13 +104,18 @@ public class DeviceCommandRelay {
      * {@code DEVICE_DISCONNECTED}, {@code TIMEOUT}, or the phone's own error code.
      */
     public CompletableFuture<Envelope> send(UUID deviceKey, MessageType command, Object payload) {
+        return send(deviceKey, command, payload, ws.commandTimeout());
+    }
+
+    /** {@link #send(UUID, MessageType, Object)} for a command the phone needs longer than usual to answer. */
+    public CompletableFuture<Envelope> send(UUID deviceKey, MessageType command, Object payload, Duration timeout) {
         Optional<WsConnection> device = deviceSessions.get(deviceKey);
         if (device.isEmpty()) {
             return CompletableFuture.failedFuture(new RelayException(ErrorCode.DEVICE_OFFLINE, "Device is offline"));
         }
         String resultType = command.wire() + MessageType.RESULT_SUFFIX;
         UUID relayId = Uuid7.generate();
-        CompletableFuture<Envelope> answered = pending.register(relayId, deviceKey, ws.commandTimeout())
+        CompletableFuture<Envelope> answered = pending.register(relayId, deviceKey, timeout)
                 .handle((result, error) -> {
                     if (error != null) {
                         throw new CompletionException(asRelayException(error));

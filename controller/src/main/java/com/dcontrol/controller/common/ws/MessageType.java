@@ -61,6 +61,12 @@ public enum MessageType {
     FIND_RING("find.ring", "web -> controller -> phone (command)"),
     FIND_LOCK("find.lock", "web -> controller -> phone (command)"),
     FIND_LOCATE("find.locate", "controller -> phone (command)"),
+    CAMERA_START("camera.start", "web -> controller -> phone (command)"),
+    CAMERA_STATE("camera.state", "phone -> controller -> one web socket (event)"),
+    CAMERA_STOP("camera.stop", "web -> controller -> phone (no result)"),
+    CAMERA_SIGNAL("camera.signal", "phone <-> controller <-> one web socket (no result)"),
+    CAMERA_SWITCH("camera.switch", "web -> controller -> phone (command)"),
+    CAMERA_CAPTURE("camera.capture", "web -> controller -> phone (command)"),
     ERROR("error", "controller -> phone | web");
 
     public static final String RESULT_SUFFIX = ".result";

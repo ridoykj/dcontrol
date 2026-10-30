@@ -59,4 +59,10 @@ Spec: docs/protocol/ws-v1.md
 | `find.ring` | web -> controller -> phone (command) |
 | `find.lock` | web -> controller -> phone (command) |
 | `find.locate` | controller -> phone (command) |
+| `camera.start` | web -> controller -> phone (command) |
+| `camera.state` | phone -> controller -> one web socket (event) |
+| `camera.stop` | web -> controller -> phone (no result) |
+| `camera.signal` | phone <-> controller <-> one web socket (no result) |
+| `camera.switch` | web -> controller -> phone (command) |
+| `camera.capture` | web -> controller -> phone (command) |
 | `error` | controller -> phone | web |

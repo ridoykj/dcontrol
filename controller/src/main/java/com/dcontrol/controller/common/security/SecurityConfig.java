@@ -50,7 +50,8 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(problems).accessDeniedHandler(problems))
                 .headers(headers -> headers
                         .contentSecurityPolicy(csp -> csp.policyDirectives(
-                                "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; "
+                                "default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; "
+                                        + "style-src 'self' 'unsafe-inline'; "
                                         + "connect-src 'self' ws: wss:; frame-ancestors 'none'; base-uri 'self'"))
                         .referrerPolicy(referrer -> referrer.policy(
                                 org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter

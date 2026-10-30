@@ -1,6 +1,5 @@
-package com.dcontrol.client.feature.screen
+package com.dcontrol.client.core.rtc
 
-import com.dcontrol.client.feature.screen.rtc.ControlOutbox
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

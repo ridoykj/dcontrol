@@ -19,7 +19,7 @@ export type Envelope = z.infer<typeof envelopeSchema>;
 
 export class RealtimeError extends Error {
   readonly code: string;
-  /** For PERMISSION_REQUIRED: the phone access that is missing (CONTACTS, CALL_LOG, SMS, PHONE, LOCATION, ACCESSIBILITY). */
+  /** For PERMISSION_REQUIRED: the phone access that is missing (CONTACTS, CALL_LOG, SMS, PHONE, LOCATION, ACCESSIBILITY, CAMERA). */
   readonly permission: string | undefined;
 
   constructor(code: string, message: string, permission?: string) {
@@ -106,8 +106,11 @@ export class RealtimeClient {
     return () => this.stateListeners.delete(listener);
   }
 
-  /** Sends a command and resolves with the matching {@code <type>.result}; rejects on error or timeout. */
-  request(type: string, payload: unknown): Promise<Envelope> {
+  /**
+   * Sends a command and resolves with the matching {@code <type>.result}; rejects on error or timeout. Commands
+   * that run longer on the phone (a camera clip) pass their own timeout.
+   */
+  request(type: string, payload: unknown, timeoutMs: number = this.options.requestTimeoutMs): Promise<Envelope> {
     const socket = this.socket;
     if (!socket || socket.readyState !== this.options.WebSocketImpl.OPEN) {
       return Promise.reject(new RealtimeError("DISCONNECTED", "Not connected"));
@@ -117,7 +120,7 @@ export class RealtimeClient {
       const timer = setTimeout(() => {
         this.pending.delete(requestId);
         reject(new RealtimeError("TIMEOUT", "No answer in time"));
-      }, this.options.requestTimeoutMs);
+      }, timeoutMs);
       this.pending.set(requestId, { resultType: `${type}.result`, resolve, reject, timer });
       socket.send(JSON.stringify({ v: 1, type, requestId, payload }));
     });

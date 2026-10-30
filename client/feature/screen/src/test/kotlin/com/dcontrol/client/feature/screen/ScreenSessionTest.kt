@@ -5,13 +5,14 @@ import com.dcontrol.client.core.accessibility.AccessibilityBridge
 import com.dcontrol.client.core.accessibility.ControlActions
 import com.dcontrol.client.core.accessibility.EditKey
 import com.dcontrol.client.core.accessibility.NavKey
+import com.dcontrol.client.core.rtc.RtcConfig
 import com.dcontrol.client.core.websocket.protocol.MessageTypes
 import com.dcontrol.client.core.websocket.protocol.ScreenPreset
 import com.dcontrol.client.core.websocket.protocol.ScreenReasons
 import com.dcontrol.client.core.websocket.protocol.ScreenStates
 import com.dcontrol.client.feature.screen.domain.ScreenFrame
 import com.dcontrol.client.feature.screen.domain.ScreenSession
-import com.dcontrol.client.feature.screen.rtc.RtcConfig
+import com.dcontrol.client.feature.screen.rtc.ScreenRtcSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -32,8 +33,7 @@ class ScreenSessionTest {
 
     private fun config(control: Boolean) = RtcConfig(
         sessionId = "s1",
-        resultData = Intent(),
-        preset = ScreenPreset.of("MEDIUM"),
+        source = ScreenRtcSource(Intent(), ScreenPreset.of("MEDIUM"), audio = false),
         audio = false,
         control = control,
         iceServers = emptyList(),

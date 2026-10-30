@@ -187,6 +187,43 @@ native WebRTC libraries.
 hides sensitive notifications while sharing; one viewer per phone; typing is set-text, not key events. A real
 device streams continued strokes for live drag feedback — this build batches a pointer gesture on release.
 
+## Remote camera (Phase 5)
+
+The web Camera tab shows a live view from the phone's camera and can take photos and short clips. The live view
+uses the same WebRTC path as screen mirroring (`:core:rtc`, non-trickle, phone offers), signaled over
+`camera.signal` and without a data channel. Because `CAMERA` has no per-capture system dialog, dcontrol's own
+prompt is the gate, and the feature follows the screen-sharing transparency rules:
+
+- **Consent every session, never auto-accepted.** `camera.start` asks "Share your camera with <viewer>?" in
+  `CameraConsentActivity`. It opens directly when the app is visible; otherwise the high-importance
+  `camera_requests` notification ("Tap to share your camera") opens it. Dismissing or leaving the prompt
+  declines (`DENIED`). Nothing touches the camera before the owner taps **Share camera**.
+- **Grants first.** Without `CAMERA` the phone answers `PERMISSION_REQUIRED` (`details.permission = CAMERA`) and
+  shows nothing; the Camera card on the status screen grants it. Audio is offered only when `RECORD_AUDIO` is
+  granted (`camera.start.result {audio}`).
+- **Visible while it runs.** `CameraCaptureService` (FGS type `camera`, plus `microphone` with audio) starts from
+  the approval, while the app is in front as Android 14+ requires. Its ongoing "Camera shared with <viewer>"
+  notification carries **Stop**; the system camera/mic indicators stay lit. Stop, the browser closing the tab
+  (`camera.stop`), or the phone going offline ends the session.
+- **One camera, three uses.** `CameraXCapture` binds Preview + ImageCapture + VideoCapture on one
+  `ProcessCameraProvider`. The Preview renders into the WebRTC `SurfaceTextureHelper` (the CameraX → WebRTC
+  bridge in `CameraXVideoCapturer`), so a lens switch rebinds CameraX while the stream stays on the same track.
+  Devices that can't bind all three fall back to Preview + ImageCapture and report `video: false`.
+- **Captures** are a full-resolution JPEG or an MP4 (H.264/AAC, up to 60 s) written to the cache directory,
+  uploaded with `PUT /api/device-api/camera/{mediaId}` (`Authorization: Device …`), deleted, and only then
+  answered with `{width, height, durationMs}`. One capture or switch runs at a time (`CONFLICT` otherwise).
+
+| Feature | Permission / component | Kind |
+|---|---|---|
+| Live view, photos, clips | `CAMERA` | runtime (Camera card) |
+| Clip and live audio | `RECORD_AUDIO` (optional) | runtime (Camera card) |
+| Capture service | `FOREGROUND_SERVICE_CAMERA`, `FOREGROUND_SERVICE_MICROPHONE`, `CameraCaptureService` type `camera` (+ `microphone`) | normal + FGS type |
+| Consent prompt | `POST_NOTIFICATIONS` (Phase 1) | runtime; new `camera_requests` channel |
+
+**Known limits:** the owner must approve each session on the phone; live audio uses WebRTC's microphone module
+while a clip with sound opens a second `AudioRecord`, so on some devices one of them may get silence (to be
+checked on hardware); the live view is not mirrored for the front camera.
+
 ## Modules
 
 | Module | Contents |
@@ -210,7 +247,9 @@ device streams continued strokes for live drag feedback — this build batches a
 | `:feature:sms` | `sms.threads` / `sms.messages` (`SmsStore`), `sms.send` with sent/delivered tracking, `sms.received` / `sms.changed` watcher, Messages card |
 | `:core:accessibility` | `AccessibilityBridge` (the service ⇄ feature seam), `ControlActions`, accessibility-settings helpers. Features depend on this, never on each other |
 | `:feature:remotecontrol` | `ControlAccessibilityService`, `GestureStreamer` (normalized events → gesture paths), `TextInjector` (`ACTION_SET_TEXT`), Remote control card |
-| `:feature:screen` | `screen.*` / `rtc.signal`, `ScreenConsentActivity`, `ScreenCaptureService` (FGS mediaProjection + microphone), `ScreenSession` behind an `RtcEngine` seam, `WebRtcEngine`, the `control` data channel, Screen share card |
+| `:core:rtc` | The shared WebRTC plumbing: `RtcEngine` / `RtcEngineFactory` seam, `RtcSource` (what a feature streams), `WebRtcEngine`, `GatheringTracker`, `ControlOutbox` |
+| `:feature:screen` | `screen.*` / `rtc.signal`, `ScreenConsentActivity`, `ScreenCaptureService` (FGS mediaProjection + microphone), `ScreenSession`, `ScreenRtcSource` (MediaProjection + playback audio), the `control` data channel, Screen share card |
+| `:feature:camera` | `camera.*`, `CameraConsentActivity`, `CameraCaptureService` (FGS camera + microphone), `CameraSession` behind the `CameraCapture` seam, `CameraXCapture` + the CameraX → WebRTC bridge, `CameraUploader`, Camera card |
 | `:feature:findphone` | `find.ring` / `find.lock` / `find.locate`, `Ringer`, `Locator` (`LocationManagerCompat`), `Locker` (lock + public notification), Find my phone card |
 
 Build logic lives in `build-logic/` (convention plugins `dcontrol.android.*`, `dcontrol.jvm.library`), and

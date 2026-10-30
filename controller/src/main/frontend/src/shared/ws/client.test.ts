@@ -127,6 +127,20 @@ describe("RealtimeClient", () => {
     client.stop();
   });
 
+  it("lets a long-running command wait longer than the default timeout", async () => {
+    const client = createClient();
+    const socket = await connected(client);
+    vi.useFakeTimers();
+
+    const promise = client.request("camera.capture", {}, 5000);
+    vi.advanceTimersByTime(1001);
+    const { requestId } = JSON.parse(socket.sent.at(-1)!) as { requestId: string };
+    socket.receive({ v: 1, type: "camera.capture.result", requestId, payload: { mediaId: "m1" } });
+
+    await expect(promise).resolves.toMatchObject({ payload: { mediaId: "m1" } });
+    client.stop();
+  });
+
   it("sends fire-and-forget messages without a requestId only while open", async () => {
     const client = createClient();
     expect(client.send("screen.stop", { sessionId: "s1" })).toBe(false);

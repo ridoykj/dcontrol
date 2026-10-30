@@ -12,6 +12,7 @@ import { BatteryIndicator, LastSeen, OnlineBadge } from "../components/DeviceInd
 const SECTIONS = [
   "overview",
   "screen",
+  "camera",
   "files",
   "notifications",
   "clipboard",
@@ -39,6 +40,9 @@ export function DeviceLayout({ deviceId }: { deviceId: string }) {
     switch (key as Section) {
       case "screen":
         void navigate({ to: "/devices/$deviceId/screen", params });
+        break;
+      case "camera":
+        void navigate({ to: "/devices/$deviceId/camera", params });
         break;
       case "find":
         void navigate({ to: "/devices/$deviceId/find", params });
@@ -86,6 +90,7 @@ export function DeviceLayout({ deviceId }: { deviceId: string }) {
             <TabList aria-label="Device features" className="overflow-x-auto">
               <Tab id="overview">Overview</Tab>
               <Tab id="screen">Screen</Tab>
+              <Tab id="camera">Camera</Tab>
               <Tab id="files">Files</Tab>
               <Tab id="notifications">Notifications</Tab>
               <Tab id="clipboard">Clipboard</Tab>

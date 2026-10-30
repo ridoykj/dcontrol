@@ -17,16 +17,17 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.dcontrol.client.feature.connection.ui.ConnectionDestination
 import com.dcontrol.client.feature.calllog.ui.CallsAccessCard
+import com.dcontrol.client.feature.camera.ui.CameraShareCard
 import com.dcontrol.client.feature.clipboard.ui.ClipboardCard
-import com.dcontrol.client.feature.contacts.ui.ContactsAccessCard
+import com.dcontrol.client.feature.connection.ui.ConnectionDestination
 import com.dcontrol.client.feature.connection.ui.connectionScreen
+import com.dcontrol.client.feature.contacts.ui.ContactsAccessCard
 import com.dcontrol.client.feature.files.ui.FilesAccessCard
+import com.dcontrol.client.feature.findphone.ui.FindPhoneCard
 import com.dcontrol.client.feature.notifications.ui.MirroredAppsDestination
 import com.dcontrol.client.feature.notifications.ui.NotificationAccessCard
 import com.dcontrol.client.feature.notifications.ui.mirroredAppsScreen
-import com.dcontrol.client.feature.findphone.ui.FindPhoneCard
 import com.dcontrol.client.feature.pairing.ui.PairingDestination
 import com.dcontrol.client.feature.pairing.ui.pairingScreen
 import com.dcontrol.client.feature.remotecontrol.ui.RemoteControlCard
@@ -83,6 +84,7 @@ private fun AppNavHost(
                 CallsAccessCard()
                 SmsAccessCard()
                 ScreenShareCard()
+                CameraShareCard()
                 RemoteControlCard()
                 FindPhoneCard()
             },

@@ -89,6 +89,12 @@ Other limits live in `application.yaml` and can be overridden like any Spring pr
 | `dcontrol.webrtc.consent-timeout` | Time to tap Start on the phone | `60s` |
 | `dcontrol.webrtc.start-per-minute` | Screen sessions per phone per minute | `6` |
 | `dcontrol.find.ring-per-minute`, `dcontrol.find.lock-per-minute` | Find my phone limits per phone | `10`, `5` |
+| `dcontrol.camera.consent-timeout` | Time for the phone owner to accept a camera session | `60s` |
+| `dcontrol.camera.start-per-minute`, `dcontrol.camera.capture-per-minute` | Camera sessions and captures per phone per minute | `6`, `20` |
+| `dcontrol.camera.capture-timeout` | Longest a capture may take, clip plus upload; must exceed `max-video-duration` | `2m` |
+| `dcontrol.camera.max-photo-size`, `dcontrol.camera.max-video-size` | Largest photo and clip a phone may upload | `20MB`, `200MB` |
+| `dcontrol.camera.max-video-duration` | Longest clip | `60s` |
+| `dcontrol.camera.media-retention`, `dcontrol.camera.max-retained` | How long captures stay in `<storage.dir>/camera`, and how many per phone | `30m`, `20` |
 
 ## Layout
 

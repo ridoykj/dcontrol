@@ -1,4 +1,4 @@
-package com.dcontrol.client.feature.screen.rtc
+package com.dcontrol.client.core.rtc
 
 /**
  * Holds phone -> browser control messages until the `control` data channel is open. The peer connection reports

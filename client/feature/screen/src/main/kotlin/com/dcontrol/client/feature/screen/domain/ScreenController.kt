@@ -19,8 +19,9 @@ import com.dcontrol.client.core.websocket.protocol.ScreenStartRequest
 import com.dcontrol.client.core.websocket.protocol.ScreenStartResult
 import com.dcontrol.client.core.websocket.protocol.ScreenStatePayload
 import com.dcontrol.client.core.websocket.protocol.ScreenStates
-import com.dcontrol.client.feature.screen.rtc.RtcConfig
-import com.dcontrol.client.feature.screen.rtc.RtcEngineFactory
+import com.dcontrol.client.core.rtc.RtcConfig
+import com.dcontrol.client.core.rtc.RtcEngineFactory
+import com.dcontrol.client.feature.screen.rtc.ScreenRtcSource
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -106,8 +107,7 @@ class ScreenController @Inject constructor(
         pending = null
         val config = RtcConfig(
             sessionId = request.sessionId,
-            resultData = resultData,
-            preset = ScreenPreset.of(request.quality),
+            source = ScreenRtcSource(resultData, ScreenPreset.of(request.quality), request.audio),
             audio = request.audio,
             control = request.control,
             iceServers = request.iceServers,

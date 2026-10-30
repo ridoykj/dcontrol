@@ -9,7 +9,8 @@ public enum PhonePermission {
     SMS,
     PHONE,
     LOCATION,
-    ACCESSIBILITY;
+    ACCESSIBILITY,
+    CAMERA;
 
     /** Parses a value a phone sent; unknown values are dropped. */
     public static Optional<PhonePermission> parse(String value) {

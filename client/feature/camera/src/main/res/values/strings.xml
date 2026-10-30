@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="camera_requests_channel_name">Camera share requests</string>
+    <string name="camera_requests_channel_description">Asks you to approve when someone wants to see this phone\'s camera.</string>
+    <string name="camera_capture_channel_name">Camera sharing</string>
+
+    <string name="camera_request_title">Tap to share your camera</string>
+    <string name="camera_request_text">%1$s wants to see this phone\'s camera. Tap to choose, or ignore to decline.</string>
+
+    <string name="camera_consent_title">Share your camera with %1$s?</string>
+    <string name="camera_consent_text">%1$s will see a live view from the camera and can take photos and video clips until you tap Stop.</string>
+    <string name="camera_consent_text_audio">%1$s will see and hear a live view from the camera and microphone, and can take photos and video clips until you tap Stop.</string>
+    <string name="camera_consent_allow">Share camera</string>
+    <string name="camera_consent_deny">Don\'t share</string>
+
+    <string name="camera_capture_title">Camera is being shared</string>
+    <string name="camera_capture_text">Shared with %1$s</string>
+    <string name="camera_capture_text_audio">Shared with %1$s · with microphone</string>
+    <string name="camera_capture_stop">Stop</string>
+
+    <string name="camera_share_title">Remote camera</string>
+    <string name="camera_share_consent">Each session needs you to approve it on the phone; the camera can\'t be opened unattended. While it is shared a notification with Stop stays visible.</string>
+    <string name="camera_share_granted">Camera access is granted. Allow the microphone too if clips should have sound.</string>
+    <string name="camera_share_granted_audio">Camera and microphone access are granted.</string>
+    <string name="camera_share_missing">Allow camera access so the web Camera tab can ask to use it.</string>
+    <string name="camera_share_grant">Grant</string>
+    <string name="camera_share_open_settings">Open settings</string>
+</resources>

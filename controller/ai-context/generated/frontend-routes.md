@@ -7,6 +7,7 @@
 | `(root)` | __root.tsx |
 | `/_authenticated` | _authenticated.tsx |
 | `/_authenticated/devices/$deviceId/calls` | _authenticated/devices/$deviceId/calls.tsx |
+| `/_authenticated/devices/$deviceId/camera` | _authenticated/devices/$deviceId/camera.tsx |
 | `/_authenticated/devices/$deviceId/clipboard` | _authenticated/devices/$deviceId/clipboard.tsx |
 | `/_authenticated/devices/$deviceId/contacts` | _authenticated/devices/$deviceId/contacts.tsx |
 | `/_authenticated/devices/$deviceId/files` | _authenticated/devices/$deviceId/files.tsx |

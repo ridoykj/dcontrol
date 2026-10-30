@@ -51,11 +51,11 @@ The same codes appear in REST problem details (`code` property).
 | `DEVICE_DISCONNECTED` | Device disconnected before answering |
 | `TIMEOUT` | Device did not answer within 15 s |
 | `UNSUPPORTED` | Device does not implement the command, or the target does not support it (e.g. reply on a notification without a reply action) |
-| `PERMISSION_REQUIRED` | The phone lacks an access the command needs (All files access, Notification access, from Phase 3 a runtime permission, and from Phase 4 location or the Accessibility service, named in `details.permission`) |
+| `PERMISSION_REQUIRED` | The phone lacks an access the command needs (All files access, Notification access, from Phase 3 a runtime permission, from Phase 4 location or the Accessibility service, and from Phase 5 the camera, named in `details.permission`) |
 | `FORBIDDEN` | The phone refuses the target (path outside storage roots, notification not clearable) |
 | `CONFLICT` | Target already exists, or a transfer chunk does not start at the received offset |
 | `PAYLOAD_TOO_LARGE` | Size limit exceeded (transfer size, account spool quota, icon size) |
-| `RATE_LIMITED` | Too many messages, or too many `sms.send` / `call.place` (Phase 3) or `screen.start` / `find.ring` / `find.lock` (Phase 4) for one phone |
+| `RATE_LIMITED` | Too many messages, or too many `sms.send` / `call.place` (Phase 3) or `screen.start` / `find.ring` / `find.lock` (Phase 4) or `camera.start` / `camera.capture` (Phase 5) for one phone |
 | `INTERNAL` | Unexpected server error |
 
 ### Close codes
@@ -809,3 +809,192 @@ The result is a `Location`:
 | `POST /api/devices/{id}/location/refresh` | `200` with a `StoredLocation` (`Location` plus `deviceId` and `updatedAt`). It is stored, replacing the previous fix. Phone errors map like other relays: `409` with the `permission` property, `409` `DEVICE_OFFLINE`, `504` `TIMEOUT` |
 | `GET /api/devices/{id}/location` | `200` with the stored `StoredLocation`, or `404` `NOT_FOUND` when none is stored |
 | `DELETE /api/devices/{id}/location` | `204`. The stored fix is physically deleted. It is also deleted when the phone is unpaired |
+
+## Phase 5 additions (still v1; all additive)
+
+Phase 5 adds a consent-gated remote camera: a live viewfinder, photos and short video clips, from the front or the
+back camera.
+
+- **Live view:** like screen mirroring, video (and microphone audio when asked for) goes peer to peer between the
+  browser and the phone over WebRTC, or through the TURN relay. The controller only relays signaling.
+- **Captures:** photos and clips pass through the controller. The phone uploads each capture over HTTP into a
+  short-lived spool on the controller's disk, and the browser fetches it from there. Captures are never written to
+  the database.
+- **Consent:** the phone owner accepts every session on the phone, and the phone shows an ongoing notification with
+  Stop for as long as it runs. Nothing is captured before the owner accepts. See `docs/features/camera.md`.
+
+### `PERMISSION_REQUIRED` values
+
+`details.permission` also accepts `CAMERA`: the camera runtime permission is missing.
+
+### Error code additions
+
+- `RATE_LIMITED` also covers `camera.start` and `camera.capture` for one phone.
+- `CONFLICT` also covers a capture or a camera switch while the session isn't `LIVE` or another capture is running.
+
+### Camera session
+
+```
+web                          controller                               phone
+ | camera.start (command) --> | checks owner, limit, audits              |
+ |                            | creates sessionId -- camera.start ---->  | (command)
+ | <-- camera.start.result -- | <------------- camera.start.result --    | {audio}
+ |                            | <------- camera.state AWAITING_CONSENT   | "Tap to share your camera"
+ | <-- camera.state --------- |                                          | owner accepts
+ | <-- camera.signal OFFER -- | <---------------- camera.signal OFFER -- | ICE gathered (≤ 4 s)
+ | camera.signal ANSWER ----> | -------------------- camera.signal ----> |
+ | <-- camera.state LIVE ---- | <------------------- camera.state LIVE   |
+ | camera.capture ----------> | opens upload slot -- camera.capture ---> | takes photo / records clip
+ |                            | <-- PUT /api/device-api/camera/{mediaId} | upload
+ | <-- camera.capture.result  | <----------- camera.capture.result ----- |
+ | GET .../camera/media/{id}  |                                          |
+ | camera.stop -------------> | --------------------- camera.stop -----> |
+```
+
+**Session rules:** the same as the screen session (Phase 4), with `camera.*` types:
+- Signaling is non-trickle (ICE gathering capped at 4 s). The phone always makes the offer. There is **no data
+  channel**: the camera takes no remote input.
+- At most one camera session per phone. A new `camera.start` replaces the old one (`ENDED`, `REPLACED`). A camera
+  session and a screen session of the same phone are independent.
+- The session belongs to the browser socket that started it. Only that socket gets its `camera.state` and
+  `camera.signal`, and only it may send `camera.signal`, `camera.stop`, `camera.switch` or `camera.capture` for it.
+  - A message naming another socket's or another phone's session is a protocol violation (`VALIDATION`).
+  - A message naming a session that no longer exists is ignored (`camera.stop`, `camera.signal`) or answered with
+    `NOT_FOUND` (commands).
+- The controller ends the session itself, telling the phone with `camera.stop` and the browser with
+  `camera.state ENDED`, when the browser socket closes, the phone disconnects (`DEVICE_OFFLINE`), or no `STARTING`
+  or `LIVE` arrives within `dcontrol.camera.consent-timeout` (60 s; `TIMEOUT`).
+
+**Values:**
+- `Facing`: `FRONT` or `BACK`;
+- `state`: `AWAITING_CONSENT`, `STARTING`, `LIVE`, `ENDED`, as for the screen session;
+- `reason` (only with `ENDED`): from the phone `DENIED`, `STOPPED_ON_PHONE`, `STOPPED`, `ERROR`; from the
+  controller only `TIMEOUT`, `DEVICE_OFFLINE`, `REPLACED`;
+- capture `kind`: `PHOTO` or `VIDEO`.
+
+#### `camera.start` (web → controller → phone, command)
+
+| Direction | Payload |
+|---|---|
+| web → controller | `{ "deviceId", "facing", "audio": bool }` |
+| controller → phone | `{ "sessionId": uuid, "viewer": string ≤ 100, "facing", "audio", "iceServers": [IceServer, ≤ 8] }` |
+| phone → controller result | `{ "audio": bool }`: false when `RECORD_AUDIO` isn't granted |
+| controller → web result | `{ "sessionId", "iceServers": [IceServer], "audio" }` |
+
+- The phone answers as soon as it has accepted the request, before the owner accepts, and before any
+  `camera.state` for the session.
+- **Asking for consent:** the consent screen opens directly while the dcontrol app is in the foreground; otherwise
+  the phone posts a high-importance "Tap to share your camera" notification. The owner always has to accept; it is
+  never automatic.
+- **Phone errors:**
+  - `PERMISSION_REQUIRED` (`CAMERA`): the phone shows nothing;
+  - `UNSUPPORTED`: the phone has no camera;
+  - `INTERNAL`.
+- **Controller errors:** `RATE_LIMITED` (more than `dcontrol.camera.start-per-minute`, 6 per phone), `NOT_FOUND`,
+  `DEVICE_OFFLINE`, `TIMEOUT`.
+
+#### `camera.state` (phone → controller → that browser)
+
+| Direction | Payload |
+|---|---|
+| phone → controller (event) | `{ "sessionId", "state", "reason": string \| null, "facing", "video": bool }` |
+| controller → web | `{ "deviceId", "sessionId", "state", "reason", "facing": Facing \| null, "video" }` |
+
+- `facing` is the camera in use. It is null in the `ENDED` the controller sends itself.
+  - When the phone has no camera facing the requested way, it opens the other one and says so here.
+  - After a successful `camera.switch` the phone sends `LIVE` again with the new `facing`.
+- `video` says whether clips can be recorded. It is false when the phone can't run preview, photo and video
+  together; then only photos are offered. It is only meaningful from `LIVE` on, because the camera is not opened
+  before.
+
+#### `camera.signal` (both directions)
+
+The same shape and rules as `rtc.signal`:
+
+| Direction | Payload |
+|---|---|
+| phone → controller (event) | `{ "sessionId", "kind": "OFFER", "sdp": string ≤ 32768 }` |
+| controller → web | `{ "deviceId", "sessionId", "kind": "OFFER", "sdp" }` |
+| web → controller (no `requestId`, no result) | `{ "sessionId", "kind": "ANSWER", "sdp" }` |
+| controller → phone (no `requestId`) | `{ "sessionId", "kind": "ANSWER", "sdp" }` |
+
+#### `camera.stop`
+
+| Direction | Payload |
+|---|---|
+| web → controller (no `requestId`, no result) | `{ "sessionId" }` |
+| controller → phone (no `requestId`) | `{ "sessionId" }` |
+
+The phone ends the session silently: it doesn't send `ENDED` back after a `camera.stop`.
+
+#### `camera.switch` (web → controller → phone, command)
+
+| Direction | Payload |
+|---|---|
+| web → controller | `{ "sessionId", "facing" }` |
+| controller → phone | `{ "sessionId", "facing" }` |
+| result (both hops) | `{ "facing" }` |
+
+- The stream continues on the same track.
+- **Errors:**
+  - `UNSUPPORTED`: the phone has no camera facing that way;
+  - `CONFLICT`: the session isn't `LIVE`, or a clip is recording;
+  - `NOT_FOUND`: the session is gone.
+
+#### `camera.capture` (web → controller → phone, command)
+
+| Direction | Payload |
+|---|---|
+| web → controller | `{ "sessionId", "kind", "durationMs": int \| null }` |
+| controller → phone | `{ "sessionId", "mediaId": uuid, "kind", "durationMs" }` |
+| phone → controller result | `{ "width": int, "height": int, "durationMs": int \| null }` |
+| controller → web result | `{ "mediaId", "kind", "mime", "bytes", "width", "height", "durationMs", "capturedAt" }` |
+
+- **`durationMs`:** for `VIDEO`, 1000 to `dcontrol.camera.max-video-duration` (60 s); for `PHOTO`, null.
+- **The controller checks first:**
+  - the session is `LIVE` and no other capture of it is running (`CONFLICT`);
+  - the rate limit `dcontrol.camera.capture-per-minute` (20 per phone; `RATE_LIMITED`).
+
+  Then it opens an upload slot named `mediaId` that only this phone may fill, and relays the command.
+- **The phone:**
+  1. takes a full-resolution JPEG (`PHOTO`), or records an MP4 for `durationMs` (`VIDEO`; with audio when the
+     session has audio);
+  2. uploads it to the slot;
+  3. answers. A result without a valid upload fails with `INTERNAL`.
+- **Phone errors:**
+  - `CONFLICT`: busy, or not `LIVE`;
+  - `UNSUPPORTED`: clips aren't available;
+  - `INTERNAL`.
+
+  When the controller refuses its upload, the phone answers with the refusal: `NOT_FOUND` (404),
+  `PAYLOAD_TOO_LARGE` (413) or `UNSUPPORTED` (415).
+- The whole command times out after `dcontrol.camera.capture-timeout` (2 min) with `TIMEOUT`, instead of the usual
+  15 s.
+- **In the web result:**
+  - `mime` (`image/jpeg` or `video/mp4`) and `bytes` come from the upload, never from the phone's claim;
+  - `durationMs` of a clip is read from the MP4 itself;
+  - `width` and `height` are the phone's figures (1–20000).
+
+**The phone's upload:** `PUT /api/device-api/camera/{mediaId}`, with `Authorization: Device id.secret`,
+`Content-Type: image/jpeg` or `video/mp4`, and the file as the body. Answers:
+
+| Status | Meaning |
+|---|---|
+| `204` | Accepted |
+| `404` | Unknown, expired or already used slot, or another device's slot |
+| `413` | Larger than `dcontrol.camera.max-photo-size` (20 MiB) or `max-video-size` (200 MiB) |
+| `415` | A `PHOTO` that isn't a JPEG, a `VIDEO` that isn't an MP4, or a clip longer than the maximum plus 1 s |
+
+The slot is used up even when the upload is rejected, so the waiting command fails at once.
+
+### Camera media (web, REST)
+
+`GET /api/devices/{deviceId}/camera/media/{mediaId}` returns a capture:
+- **Success:** `200` with the bytes, the validated `Content-Type`, `X-Content-Type-Options: nosniff`,
+  `Cache-Control: private, max-age=1800` and `Content-Disposition: inline` with a file name such as
+  `camera-20261030-101530.jpg`.
+- **Failure:** `404` `NOT_FOUND` for unknown or expired media, or media of another account.
+
+Captures are kept on disk for `dcontrol.camera.media-retention` (30 min), at most
+`dcontrol.camera.max-retained` (20) per phone, oldest removed first. They are also removed when the phone is
+unpaired.

@@ -1,6 +1,5 @@
-package com.dcontrol.client.feature.screen
+package com.dcontrol.client.core.rtc
 
-import com.dcontrol.client.feature.screen.rtc.GatheringTracker
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test

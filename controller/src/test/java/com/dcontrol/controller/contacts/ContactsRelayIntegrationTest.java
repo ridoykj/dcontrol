@@ -135,8 +135,8 @@ class ContactsRelayIntegrationTest extends IntegrationTest {
             assertThat(missing.path("details").path("permission").asString()).isEqualTo("CONTACTS");
 
             web.send(command("contacts.list", UUID.randomUUID(), list));
-            phone.send(errorFor(phone.await("contacts.list"), "PERMISSION_REQUIRED", "Grant camera",
-                    Map.of("permission", "CAMERA")));
+            phone.send(errorFor(phone.await("contacts.list"), "PERMISSION_REQUIRED", "Grant microphone",
+                    Map.of("permission", "MICROPHONE")));
             assertThat(web.await("contacts.list.result").path("error").has("details")).isFalse();
 
             web.send(command("contacts.list", UUID.randomUUID(), list));

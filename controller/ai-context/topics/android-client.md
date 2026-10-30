@@ -26,12 +26,14 @@ Contract with the controller: `controller/docs/protocol/ws-v1.md` and `controlle
 | `:feature:sms` | feature | `data/SmsStore`, `SmsGateway`, `SmsStatusTracker`, `SmsReportIntents`, `SmsStatusReceiver`, `SmsCommands` + `SmsWatcher`, `ui/SmsAccessCard` |
 | `:core:accessibility` | Android library | `AccessibilityBridge` (`@Singleton` service ⇄ feature seam; `available: StateFlow`, `actions`), `ControlActions` (normalized `down/move/up/wheel/navKey/text/edit`), `NavKey`/`EditKey`, `isAccessibilityServiceEnabled`, `openAccessibilitySettings` |
 | `:feature:remotecontrol` | feature | `service/ControlAccessibilityService` (implements `ControlActions`, registers into the bridge), `domain/GestureStreamer` (normalized → display-pixel `GesturePath`), `domain/TextInjector` (`EditableNode` seam, `ACTION_SET_TEXT`/`ACTION_IME_ENTER`), `ui/RemoteControlCard` |
-| `:feature:screen` | feature | `data/ScreenCommands` (`screen.start`, `rtc.signal`, `screen.stop`), `domain/ScreenController` + `ScreenSession` + `ScreenConsentFlow`, `rtc/RtcEngine` seam + `WebRtcEngine` (+ `AudioPlaybackCapture`), `control/` (parser, router, `PhoneControl`), `service/ScreenConsentActivity`/`ScreenCaptureService`/`ScreenNotifications`, `ui/ScreenShareCard` |
+| `:core:rtc` | Android library | `RtcEngine`/`RtcEngineFactory`/`RtcConfig` seam with an `RtcSource` (video capturer, size, frame rate, bitrate, optional audio module), `WebRtcEngine`, `GatheringTracker`, `ControlOutbox`, `di/RtcModule` (the one `RtcEngineFactory` binding) |
+| `:feature:screen` | feature | `data/ScreenCommands` (`screen.start`, `rtc.signal`, `screen.stop`), `domain/ScreenController` + `ScreenSession` + `ScreenConsentFlow`, `rtc/ScreenRtcSource` (`ScreenCapturerAndroid` + `AudioPlaybackCapture`), `control/` (parser, router, `PhoneControl`), `service/ScreenConsentActivity`/`ScreenCaptureService`/`ScreenNotifications`, `ui/ScreenShareCard` |
+| `:feature:camera` | feature | `data/CameraCommands` (`camera.start`/`signal`/`stop`/`capture`/`switch`) + `CameraUploader`, `domain/CameraController` + `CameraSession` + `CameraConsentFlow`, `capture/CameraCapture` seam + `CameraXCapture` (Preview + ImageCapture + VideoCapture) + `CameraXVideoCapturer` (CameraX preview → WebRTC), `service/CameraConsentActivity`/`CameraCaptureService`/`CameraNotifications`, `ui/CameraShareCard` |
 | `:feature:findphone` | feature | `data/FindCommands` (`find.ring`/`find.lock`/`find.locate`), `domain/Ringer` (+ `TonePlayer`/`RingNotifier`), `Locator` (`LocationManagerCompat`), `Locker` (+ `LockNotifier`), `service/RingStopReceiver`, `ui/FindPhoneCard` |
 
 Features never depend on each other; the screen and find-phone features reach the Accessibility service only
 through `:core:accessibility`. Shared types live in `core/*`. `:app` wires the nav graphs together and passes
-the files/notifications/clipboard/contacts/calls/SMS/screen/remote-control/find cards into
+the files/notifications/clipboard/contacts/calls/SMS/screen/camera/remote-control/find cards into
 `connectionScreen(featureCards = …)`. The connection notification reaches `ClipboardSendActivity` through the
 action string `com.dcontrol.client.action.SEND_CLIPBOARD`.
 
@@ -227,6 +229,35 @@ action string `com.dcontrol.client.action.SEND_CLIPBOARD`.
 - **Deviation**: a pointer gesture is batched and dispatched on release rather than streamed as continued
   strokes, so a drag has no live feedback on a real device. Everything else matches the plan.
 
+## Remote camera (Phase 5)
+
+- **Protocol** (`Phase5Protocol.kt`, `MessageTypes.CAMERA_*`, `Permissions.CAMERA`): `camera.start`,
+  `camera.capture`, `camera.switch` (commands), `camera.stop` + `camera.signal` ANSWER (controller → phone),
+  `camera.state` + `camera.signal` OFFER (phone → controller). `camera.signal` reuses the `RtcSignal` shape.
+  Values are UPPERCASE wire strings (`CameraFacings`, `CameraStates`, `CameraReasons`, `CaptureKinds`).
+- **Shared WebRTC**: the screen engine lives in `:core:rtc`; each feature supplies an `RtcSource`. Screen keeps its
+  track ids, presets and playback audio. A source without an audio module gets WebRTC's standard mic module.
+- **Consent**: without `CAMERA` the phone answers `PERMISSION_REQUIRED {CAMERA}` and shows nothing. Otherwise
+  `CameraConsentActivity` opens directly while the app is in the foreground, else the `camera_requests`
+  notification opens it. It is never accepted automatically, and it requests no permissions itself; the Camera
+  card grants `CAMERA` and `RECORD_AUDIO`. `CameraCaptureService` (FGS `camera`, plus `microphone` with audio)
+  shows "Camera shared with …" with Stop.
+- **Capture**: `CameraXCapture` binds Preview + ImageCapture + VideoCapture to one lens. If that fails, it binds
+  Preview + ImageCapture and reports `video: false`. The preview's `SurfaceRequest` is served by a WebRTC
+  `SurfaceTextureHelper`, and rotation comes from `TransformationInfo`. Photos and clips are written to temp
+  files, uploaded by `CameraUploader` (`PUT /api/device-api/camera/{mediaId}`), deleted, and then answered.
+  Upload refusals map 404 → `NOT_FOUND`, 413 → `PAYLOAD_TOO_LARGE`, 415 → `UNSUPPORTED`.
+- **Lifecycle**: the result `{audio}` comes first, and `AWAITING_CONSENT` about 150 ms later. A new start
+  replaces the old session. `camera.stop` or losing the controller ends the session silently, and every end stops
+  the capture service. After a switch, `LIVE` is sent again with the new `facing`.
+- **Emulator run (2026-10-30)**: consent (direct and through the notification), decline, live view, switch,
+  photo, clip, and every way of ending a session work. Clip audio there is AMR-NB from the emulator's camcorder
+  profiles, which browsers play silent. CameraX 1.6 takes the codec from the profile and has no public override.
+- **Not yet checked on a real phone**:
+  - AAC clip audio, with live mic audio at the same time (two `AudioRecord`s);
+  - the photos-only fallback;
+  - front/back rotation.
+
 ## Credentials, pairing and connection lifecycle
 
 Unchanged from Phase 1: Keystore AES-GCM `CredentialStore`; QR → preview (host + masked email) → claim;
@@ -252,5 +283,7 @@ full-jitter `Backoff`, `4001`/`4003`/`401` → Unpaired, `4009` → wait 60 s.
 | `core/accessibility/src/test` | `AccessibilityBridgeTest` (register/unregister, `available`, stale-service guard) |
 | `feature/remotecontrol/src/test` | `GestureStreamerTest` (tap vs long press, swipe, wheel → swipe, rotation mapping), `TextInjectorTest` (fake node: insert/replace/backspace/enter), `RemoteControlCardTest` |
 | `feature/screen/src/test` | `ControlMessageParserTest` (limits, unknown types, router drop counter), `ScreenSessionTest` (fake `RtcEngine`: offer after gathering, answer, silent stop, `control.available` change), `ScreenCommandsTest` (consent path with/without Accessibility, audio/control flags), `ScreenShareCardTest` |
+| `core/rtc/src/test` | `GatheringTrackerTest`, `ControlOutboxTest` (moved from screen) |
+| `feature/camera/src/test` | `CameraSessionTest` (fake `RtcEngine` + `CameraCapture`: offer, LIVE, silent stop, capture and switch through the seam), `CameraCommandsTest` (Robolectric: consent direct vs notification, `CAMERA`/`RECORD_AUDIO` gating, validation, capture only while live, upload errors), `CameraShareCardTest` |
 | `feature/findphone/src/test` | `RingerTest` (max volume, auto-stop, restore), `LocatorTest` (Robolectric `ShadowLocationManager`: disabled, none, field mapping), `LockerTest` (PERMISSION_REQUIRED vs lock + notify), `FindCommandsTest` (ring/lock/locate validation and permission errors), `FindPhoneCardTest` |
 | `feature/pairing`, `feature/connection` | Phase 1 tests |

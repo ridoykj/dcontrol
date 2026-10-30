@@ -8,19 +8,11 @@ import { Button } from "@/shared/components/ui/shadcn/Button";
 import { ProgressBar } from "@/shared/components/ui/shadcn/ProgressBar";
 import { Select, SelectItem } from "@/shared/components/ui/shadcn/Select";
 import { Switch } from "@/shared/components/ui/shadcn/Switch";
+import { StatsLine } from "@/shared/rtc/StatsLine";
 import { NavBar } from "../components/NavBar";
 import { ScreenViewer } from "../components/ScreenViewer";
-import { useScreenSession, type ScreenStats } from "../hooks/useScreenSession";
+import { useScreenSession } from "../hooks/useScreenSession";
 import { endText, type Quality, QUALITIES, qualityLabels } from "../lib/screenSession";
-
-function StatsLine({ stats }: { stats: ScreenStats }) {
-  const parts = [
-    stats.fps !== null ? `${Math.round(stats.fps)} fps` : null,
-    stats.kbps !== null ? `${(stats.kbps / 1000).toFixed(1)} Mbps` : null,
-    stats.route === "relay" ? "relayed through TURN" : stats.route === "direct" ? "direct" : null,
-  ].filter(Boolean);
-  return parts.length > 0 ? <span className="text-xs text-neutral-500">{parts.join(" · ")}</span> : null;
-}
 
 /** Mirror the phone's screen and, with the Accessibility service on, control it. */
 export function ScreenPage({ deviceId }: { deviceId: string }) {

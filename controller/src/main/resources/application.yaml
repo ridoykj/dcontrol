@@ -98,3 +98,13 @@ dcontrol:
   find:
     ring-per-minute: 10
     lock-per-minute: 5
+  camera:
+    consent-timeout: 60s
+    start-per-minute: 6
+    capture-per-minute: 20
+    capture-timeout: 2m
+    max-photo-size: 20MB
+    max-video-size: 200MB
+    max-video-duration: 60s
+    media-retention: 30m
+    max-retained: 20

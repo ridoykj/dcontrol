@@ -1,6 +1,9 @@
 package com.dcontrol.client.feature.screen.domain
 
 import com.dcontrol.client.core.accessibility.AccessibilityBridge
+import com.dcontrol.client.core.rtc.RtcConfig
+import com.dcontrol.client.core.rtc.RtcEngine
+import com.dcontrol.client.core.rtc.RtcEngineFactory
 import com.dcontrol.client.core.websocket.DeviceEventSender
 import com.dcontrol.client.core.websocket.protocol.MessageTypes
 import com.dcontrol.client.core.websocket.protocol.RtcKinds
@@ -10,9 +13,6 @@ import com.dcontrol.client.core.websocket.protocol.ScreenStatePayload
 import com.dcontrol.client.core.websocket.protocol.ScreenStates
 import com.dcontrol.client.feature.screen.control.ControlRouter
 import com.dcontrol.client.feature.screen.control.PhoneControl
-import com.dcontrol.client.feature.screen.rtc.RtcConfig
-import com.dcontrol.client.feature.screen.rtc.RtcEngine
-import com.dcontrol.client.feature.screen.rtc.RtcEngineFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.drop

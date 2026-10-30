@@ -120,6 +120,20 @@ object MessageTypes {
 
     // Phase 4 events (phone -> controller)
     const val SCREEN_STATE = "screen.state"
+
+    // Phase 5 commands (controller -> phone)
+    const val CAMERA_START = "camera.start"
+    const val CAMERA_SWITCH = "camera.switch"
+    const val CAMERA_CAPTURE = "camera.capture"
+
+    // Phase 5 controller -> phone events (no requestId)
+    const val CAMERA_STOP = "camera.stop"
+
+    // Phase 5 both directions, shaped like rtc.signal: OFFER is phone -> controller, ANSWER controller -> phone
+    const val CAMERA_SIGNAL = "camera.signal"
+
+    // Phase 5 events (phone -> controller)
+    const val CAMERA_STATE = "camera.state"
 }
 
 /** Values of `error.details.permission` with `PERMISSION_REQUIRED` (ws-v1.md, Phase 3 additions). */
@@ -132,6 +146,9 @@ object Permissions {
     // Phase 4
     const val LOCATION = "LOCATION"
     const val ACCESSIBILITY = "ACCESSIBILITY"
+
+    // Phase 5
+    const val CAMERA = "CAMERA"
 }
 
 /** The only codes a phone may answer commands with (ws-v1.md, Phase 2 additions). */

@@ -1,4 +1,4 @@
-package com.dcontrol.client.feature.screen.rtc
+package com.dcontrol.client.core.rtc
 
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.delay

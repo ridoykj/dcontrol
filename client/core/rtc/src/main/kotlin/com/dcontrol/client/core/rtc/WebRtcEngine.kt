@@ -1,16 +1,7 @@
-package com.dcontrol.client.feature.screen.rtc
+package com.dcontrol.client.core.rtc
 
-import android.annotation.SuppressLint
 import android.content.Context
-import android.media.AudioAttributes
-import android.media.AudioFormat
-import android.media.AudioPlaybackCaptureConfiguration
-import android.media.AudioRecord
-import android.media.projection.MediaProjection
-import android.os.Build
-import android.util.DisplayMetrics
 import android.util.Log
-import android.view.WindowManager
 import com.dcontrol.client.core.websocket.protocol.IceServer
 import java.nio.ByteBuffer
 import kotlinx.coroutines.CompletableDeferred
@@ -26,17 +17,16 @@ import org.webrtc.PeerConnection
 import org.webrtc.PeerConnectionFactory
 import org.webrtc.RtpReceiver
 import org.webrtc.RtpSender
-import org.webrtc.ScreenCapturerAndroid
 import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
 import org.webrtc.SurfaceTextureHelper
+import org.webrtc.VideoCapturer
 import org.webrtc.VideoSource
 import org.webrtc.audio.JavaAudioDeviceModule
 
 /**
- * The WebRTC-backed [RtcEngine]. The phone is the offerer; audio is the device's own playback, captured with
- * `AudioPlaybackCapture` and fed into WebRTC's audio buffer callback (verified on the SDK jar), so no
- * microphone samples are ever sent. Instances are single-use and built only after MediaProjection consent.
+ * The WebRTC-backed [RtcEngine]. The phone is the offerer; what is captured (video and the audio module) comes
+ * from [RtcConfig.source]. Instances are single-use and built only after the feature's consent.
  */
 class WebRtcEngine(
     private val context: Context,
@@ -50,16 +40,17 @@ class WebRtcEngine(
 
     private var factory: PeerConnectionFactory? = null
     private var connection: PeerConnection? = null
-    private var capturer: ScreenCapturerAndroid? = null
+    private var capturer: VideoCapturer? = null
     private var surfaceHelper: SurfaceTextureHelper? = null
     private var videoSource: VideoSource? = null
     private var dataChannel: DataChannel? = null
     private var audioModule: JavaAudioDeviceModule? = null
-    private val playback = PlaybackAudioCapture()
 
     override suspend fun start(): String {
         ensureInitialized(context)
-        val module = buildAudioModule()
+        // Without a module of its own the source gets WebRTC's standard microphone module, built here so
+        // close() can release it.
+        val module = config.source.createAudioModule(context) ?: JavaAudioDeviceModule.builder(context).createAudioDeviceModule()
         audioModule = module
 
         val peerFactory = PeerConnectionFactory.builder()
@@ -121,7 +112,7 @@ class WebRtcEngine(
     }
 
     override fun close() {
-        playback.stop()
+        runCatching { config.source.release() }
         runCatching { capturer?.stopCapture() }
         runCatching { dataChannel?.dispose() }
         runCatching { connection?.dispose() }
@@ -134,82 +125,45 @@ class WebRtcEngine(
     }
 
     private fun addVideo(peerFactory: PeerConnectionFactory, peer: PeerConnection) {
-        val source = peerFactory.createVideoSource(false).also { it.setIsScreencast(true) }
+        val rtcSource = config.source
+        val source = peerFactory.createVideoSource(false).also { it.setIsScreencast(rtcSource.isScreencast) }
         videoSource = source
-        val helper = SurfaceTextureHelper.create("screen-capture", egl.eglBaseContext)
+        val helper = SurfaceTextureHelper.create("${rtcSource.label}-capture", egl.eglBaseContext)
         surfaceHelper = helper
-        val screenCapturer = ScreenCapturerAndroid(config.resultData, ProjectionCallback())
-        capturer = screenCapturer
-        screenCapturer.initialize(helper, context, source.capturerObserver)
-        val (width, height) = captureSize()
-        screenCapturer.startCapture(width, height, config.preset.frameRate)
+        val videoCapturer = rtcSource.createVideoCapturer(context) { listener.onFailed() }
+        capturer = videoCapturer
+        videoCapturer.initialize(helper, context, source.capturerObserver)
+        val size = rtcSource.videoSize(context)
+        videoCapturer.startCapture(size.width, size.height, rtcSource.frameRate)
 
-        val track = peerFactory.createVideoTrack("screen", source)
-        val sender = peer.addTrack(track, listOf(STREAM_ID))
+        val track = peerFactory.createVideoTrack(rtcSource.label, source)
+        val sender = peer.addTrack(track, listOf(streamId()))
         applyBitrate(sender)
     }
 
     private fun addAudio(peerFactory: PeerConnectionFactory, peer: PeerConnection) {
-        val projection = capturer?.mediaProjection
-        if (projection != null) playback.start(projection)
+        config.source.onAudioTrackAdded()
         val source = peerFactory.createAudioSource(MediaConstraints())
         val track = peerFactory.createAudioTrack("audio", source)
-        peer.addTrack(track, listOf(STREAM_ID))
+        peer.addTrack(track, listOf(streamId()))
     }
 
     private fun applyBitrate(sender: RtpSender?) {
+        val maxBitrate = config.source.maxBitrateBps ?: return
         val params = sender?.parameters ?: return
         params.encodings.forEach { encoding ->
-            encoding.maxBitrateBps = config.preset.maxBitrateBps
-            encoding.maxFramerate = config.preset.frameRate
+            encoding.maxBitrateBps = maxBitrate
+            encoding.maxFramerate = config.source.frameRate
         }
         sender.parameters = params
     }
 
-    private fun captureSize(): Pair<Int, Int> {
-        val metrics = realMetrics()
-        val longEdge = maxOf(metrics.widthPixels, metrics.heightPixels)
-        if (longEdge <= config.preset.longEdge || longEdge == 0) {
-            return metrics.widthPixels to metrics.heightPixels
-        }
-        val scale = config.preset.longEdge.toFloat() / longEdge
-        return even(metrics.widthPixels * scale) to even(metrics.heightPixels * scale)
-    }
-
-    private fun realMetrics(): DisplayMetrics {
-        val metrics = DisplayMetrics()
-        val windowManager = context.getSystemService(WindowManager::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val bounds = windowManager.maximumWindowMetrics.bounds
-            metrics.widthPixels = bounds.width()
-            metrics.heightPixels = bounds.height()
-            metrics.densityDpi = context.resources.displayMetrics.densityDpi
-        } else {
-            @Suppress("DEPRECATION")
-            windowManager.defaultDisplay.getRealMetrics(metrics)
-        }
-        return metrics
-    }
+    private fun streamId(): String = "dcontrol-${config.source.label}"
 
     private suspend fun createOffer(peer: PeerConnection): SessionDescription {
         val result = CompletableDeferredSdp()
         peer.createOffer(result, MediaConstraints())
         return result.await()
-    }
-
-    private fun buildAudioModule(): JavaAudioDeviceModule {
-        val builder = JavaAudioDeviceModule.builder(context)
-            .setInputSampleRate(PlaybackAudioCapture.SAMPLE_RATE)
-            .setUseHardwareAcousticEchoCanceler(false)
-            .setUseHardwareNoiseSuppressor(false)
-        if (config.audio) {
-            // Overwrite the mic buffer WebRTC just read with the captured playback audio; return its timestamp.
-            builder.setAudioBufferCallback { buffer, _, _, _, bytesRead, captureTimestampNs ->
-                playback.fill(buffer, bytesRead)
-                captureTimestampNs
-            }
-        }
-        return builder.createAudioDeviceModule()
     }
 
     private fun toNativeIceServer(server: IceServer): PeerConnection.IceServer {
@@ -268,77 +222,6 @@ class WebRtcEngine(
         }
     }
 
-    private inner class ProjectionCallback : MediaProjection.Callback() {
-        override fun onStop() {
-            listener.onFailed()
-        }
-    }
-
-    /**
-     * Captures the device's own playback (media/game/unknown usages) and feeds it into WebRTC's audio buffer.
-     * A real device opens an [AudioRecord]; until it is started (or when unavailable) the buffer is silenced.
-     */
-    private class PlaybackAudioCapture {
-        private var record: AudioRecord? = null
-
-        // RECORD_AUDIO is verified by ScreenController before config.audio is set, so this path only runs when
-        // it is granted; lint can't follow that, and the AudioRecord build is already guarded by try/catch.
-        @SuppressLint("MissingPermission")
-        fun start(projection: MediaProjection) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
-            val captureConfig = AudioPlaybackCaptureConfiguration.Builder(projection)
-                .addMatchingUsage(AudioAttributes.USAGE_MEDIA)
-                .addMatchingUsage(AudioAttributes.USAGE_GAME)
-                .addMatchingUsage(AudioAttributes.USAGE_UNKNOWN)
-                .build()
-            val format = AudioFormat.Builder()
-                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                .setSampleRate(SAMPLE_RATE)
-                .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
-                .build()
-            val minBuffer = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
-            val created = try {
-                AudioRecord.Builder()
-                    .setAudioFormat(format)
-                    .setBufferSizeInBytes(maxOf(minBuffer, SAMPLE_RATE))
-                    .setAudioPlaybackCaptureConfig(captureConfig)
-                    .build()
-            } catch (_: Exception) {
-                null
-            }
-            created?.runCatching { startRecording() }
-            record = created
-        }
-
-        /** Replaces the first [bytesRead] bytes of [buffer] with captured audio, or silence. */
-        fun fill(buffer: ByteBuffer, bytesRead: Int) {
-            buffer.position(0)
-            val active = record
-            if (active != null && active.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
-                val read = active.read(buffer, bytesRead)
-                if (read in 0 until bytesRead) zero(buffer, read, bytesRead)
-            } else {
-                zero(buffer, 0, bytesRead)
-            }
-            buffer.position(0)
-        }
-
-        private fun zero(buffer: ByteBuffer, from: Int, to: Int) {
-            buffer.position(from)
-            for (i in from until to) buffer.put(0)
-        }
-
-        fun stop() {
-            runCatching { record?.stop() }
-            runCatching { record?.release() }
-            record = null
-        }
-
-        companion object {
-            const val SAMPLE_RATE = 48_000
-        }
-    }
-
     /** Captures the offer produced by [PeerConnection.createOffer]. */
     private class CompletableDeferredSdp : SdpObserver {
         private val deferred = CompletableDeferred<SessionDescription>()
@@ -354,8 +237,7 @@ class WebRtcEngine(
     }
 
     private companion object {
-        const val TAG = "ScreenRtc"
-        const val STREAM_ID = "dcontrol-screen"
+        const val TAG = "Rtc"
         const val GATHER_TIMEOUT_MS = 4_000L
 
         @Volatile
@@ -369,11 +251,6 @@ class WebRtcEngine(
                     .createInitializationOptions(),
             )
             initialized = true
-        }
-
-        fun even(value: Float): Int {
-            val rounded = value.toInt()
-            return if (rounded % 2 == 0) rounded else rounded - 1
         }
     }
 
