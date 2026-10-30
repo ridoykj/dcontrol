@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: dcontrol
+      POSTGRES_USER: dcontrol
+      POSTGRES_PASSWORD: dcontrol
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dcontrol -d dcontrol"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:v1.32.0
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  # TURN/STUN relay for screen sessions (dev only: no TLS, private peers allowed). Set TURN_EXTERNAL_IP in .env
+  # to this PC's LAN IP when a real phone on Wi-Fi should relay through it.
+  coturn:
+    image: coturn/coturn:4.18.0-alpine
+    labels:
+      # Spring Boot's TCP readiness check would probe the UDP relay ports too.
+      org.springframework.boot.readiness-check.tcp.disable: true
+    command:
+      - -n
+      - --log-file=stdout
+      - --listening-port=3478
+      - --min-port=49160
+      - --max-port=49200
+      - --use-auth-secret
+      - --static-auth-secret=${DCONTROL_TURN_SECRET:-dev-turn-secret}
+      - --realm=dcontrol
+      - --external-ip=${TURN_EXTERNAL_IP:-127.0.0.1}
+      - --fingerprint
+      # Dev only: with external-ip 127.0.0.1 both sides' relay addresses are loopback (emulator + local
+      # browser). Production uses denied-peer-ip for private and loopback ranges instead (README).
+      - --allow-loopback-peers
+      # DTLS and the CLI are off by default since 4.18 (--no-dtls was removed, --no-cli is deprecated).
+      - --no-tls
+      - --no-multicast-peers
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+      - "49160-49200:49160-49200/udp"
+
+volumes:
+  postgres-data:

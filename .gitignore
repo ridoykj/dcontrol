@@ -1,0 +1,35 @@
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# Controller (Maven + frontend)
+controller/target/
+controller/.mvn/wrapper/maven-wrapper.jar
+controller/node/
+controller/src/main/resources/static/
+controller/src/main/frontend/node_modules/
+controller/src/main/frontend/coverage/
+controller/src/main/frontend/.tanstack/
+*.log
+.env
+.env.local
+
+# Client (Gradle / Android)
+client/**/.gradle/
+client/**/.kotlin/
+client/build/
+client/**/build/
+client/local.properties
+client/captures/
+client/.cxx/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# Local demo credentials
+.claude/demo-account.txt

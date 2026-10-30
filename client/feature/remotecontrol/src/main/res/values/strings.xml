@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="remote_control_service_label">dcontrol Remote control</string>
+    <string name="remote_control_service_description">Lets dcontrol inject touches, navigation keys and typing from the web console while you are mirroring, and lock the screen for find my phone. Input is only used on command; no screen content is read beyond the focused text field.</string>
+
+    <string name="remote_control_title">Remote control</string>
+    <string name="remote_control_enabled">The Accessibility service is on. The web console can control the phone while mirroring.</string>
+    <string name="remote_control_disabled">Turn on the Accessibility service to let the web console tap, swipe and type, and to allow find-my-phone lock.</string>
+    <string name="remote_control_restricted_hint">Sideloaded on Android 13+: open App info, tap the ⋮ menu and choose "Allow restricted settings" before enabling it in Accessibility.</string>
+    <string name="remote_control_enable">Open Accessibility settings</string>
+</resources>

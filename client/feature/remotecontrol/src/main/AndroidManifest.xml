@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- Bound by the system after the user enables the service in Settings › Accessibility.
+             BIND_ACCESSIBILITY_SERVICE is a system-held permission: only the system can bind it. The service
+             injects remote input (gestures, nav keys, typing) and performs the find-phone lock. -->
+        <service
+            android:name=".service.ControlAccessibilityService"
+            android:exported="true"
+            android:label="@string/remote_control_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+    </application>
+
+</manifest>

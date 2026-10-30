@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pairing_scan_title">Scan pairing code</string>
+    <string name="pairing_scan_instructions">In the dcontrol web app, open Devices → Pair a phone, then point the camera at the QR code.</string>
+    <string name="pairing_camera_rationale_title">Camera access</string>
+    <string name="pairing_camera_rationale_text">dcontrol uses the camera only to read the pairing QR code shown in your browser. No images are stored or sent.</string>
+    <string name="pairing_camera_allow">Allow camera</string>
+    <string name="pairing_open_settings">Open settings</string>
+    <string name="pairing_confirm_title">Pair with this controller?</string>
+    <string name="pairing_confirm_controller">Controller</string>
+    <string name="pairing_confirm_account">Account</string>
+    <string name="pairing_confirm_warning">Only continue if you started pairing yourself in your own browser. Once paired, this controller can manage this phone.</string>
+    <string name="pairing_device_name">Device name</string>
+    <string name="pairing_pair">Pair</string>
+    <string name="pairing_cancel">Cancel</string>
+    <string name="pairing_error_invalid_code">That is not a dcontrol pairing code.</string>
+    <string name="pairing_error_expired">This pairing code expired or was already used. Generate a new one in the web app.</string>
+    <string name="pairing_error_network">Can\'t reach the controller. Check that the phone can open its address.</string>
+    <string name="pairing_error_rejected">The controller rejected the pairing request.</string>
+    <string name="pairing_error_local_network">This controller is on your local network. Allow dcontrol to connect to local network devices, then scan a new code. If Android no longer asks, allow it in the app\'s settings.</string>
+</resources>

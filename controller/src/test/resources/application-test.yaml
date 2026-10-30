@@ -1,0 +1,15 @@
+dcontrol:
+  public-base-url: http://controller.test:8080
+  web-base-url: http://web.test
+  jwt:
+    secret: test-secret-0123456789abcdef0123456789abcdef
+  ws:
+    command-timeout: 2s
+    hello-timeout: 2s
+    offline-after: 75s
+  cookie:
+    secure: false
+  storage:
+    dir: ${java.io.tmpdir}/dcontrol-test/${random.uuid}
+  webrtc:
+    turn-secret: test-turn-secret

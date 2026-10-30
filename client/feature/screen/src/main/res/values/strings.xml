@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen_requests_channel_name">Screen share requests</string>
+    <string name="screen_requests_channel_description">Asks you to tap Start when someone wants to mirror this phone.</string>
+    <string name="screen_capture_channel_name">Screen sharing</string>
+
+    <string name="screen_request_title">Tap to share your screen</string>
+    <string name="screen_request_text">%1$s is waiting to view this phone. Tap to start, or ignore to decline.</string>
+
+    <string name="screen_capture_title">Screen is being shared</string>
+    <string name="screen_capture_text">Shared with %1$s</string>
+    <string name="screen_capture_text_controlled">Shared with %1$s · controlled</string>
+    <string name="screen_capture_stop">Stop</string>
+
+    <string name="screen_share_title">Screen mirroring</string>
+    <string name="screen_share_consent">Each session needs you to tap Start on the phone; mirroring can\'t run unattended. Turn on Remote control to let the viewer tap and type.</string>
+    <string name="screen_share_caveats">Secure windows (such as banking apps) are black in the stream, and on Android 15+ sensitive notifications are hidden while sharing. Audio shares the phone\'s media playback, not the microphone.</string>
+</resources>

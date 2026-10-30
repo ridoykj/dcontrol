@@ -1,0 +1,28 @@
+# Local development: compose.yaml (PostgreSQL, Mailpit, coturn) is started automatically by spring-boot-docker-compose.
+spring:
+  docker:
+    compose:
+      enabled: true
+      file: compose.yaml
+      lifecycle-management: start-only
+
+dcontrol:
+  # Android emulator reaches the host as 10.0.2.2; a real phone needs your LAN IP (see README).
+  public-base-url: ${DCONTROL_PUBLIC_BASE_URL:http://10.0.2.2:8080}
+  web-base-url: ${DCONTROL_WEB_BASE_URL:http://localhost:5173}
+  jwt:
+    secret: ${DCONTROL_JWT_SECRET:dev-only-secret-change-me-0123456789abcdef}
+  ws:
+    allowed-origins:
+      - http://localhost:5173
+  cookie:
+    secure: false
+  storage:
+    dir: ${DCONTROL_STORAGE_DIR:${java.io.tmpdir}/dcontrol}
+  webrtc:
+    # Must match coturn's static-auth-secret in compose.yaml.
+    turn-secret: ${DCONTROL_TURN_SECRET:dev-turn-secret}
+
+logging:
+  level:
+    com.dcontrol: DEBUG

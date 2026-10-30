@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="contacts_access_title">Contacts</string>
+    <string name="contacts_access_granted">The web app can show, add, edit and delete contacts on this phone.</string>
+    <string name="contacts_access_missing">Allow access to contacts so you can manage them from the web app. Deleting a synced contact also deletes it from its account.</string>
+    <string name="contacts_access_grant">Allow access</string>
+    <string name="contacts_access_open_settings">Open app settings</string>
+</resources>

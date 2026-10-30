@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="files_access_title">Files</string>
+    <string name="files_access_granted">The web file manager can browse and transfer files on this phone.</string>
+    <string name="files_access_missing">Allow access to all files so you can browse, upload and download files from the web app.</string>
+    <string name="files_access_grant">Allow access</string>
+
+    <string name="transfer_channel_name">Transfers</string>
+    <string name="transfer_sending">Sending %1$s</string>
+    <string name="transfer_receiving">Receiving %1$s</string>
+    <string name="transfer_sent">Sent %1$s</string>
+    <string name="transfer_received">Saved %1$s</string>
+    <string name="transfer_failed">Transfer of %1$s failed</string>
+</resources>

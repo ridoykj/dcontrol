@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: lets `adb shell am start -a android.intent.action.VIEW -d "dcontrol://pair?..."`
+     feed a pairing payload to the app (emulators can't easily scan a QR code). No BROWSABLE category,
+     so web pages can't trigger it. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            tools:node="merge">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data
+                    android:host="pair"
+                    android:scheme="dcontrol" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

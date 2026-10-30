@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="find_ring_channel_name">Find my phone — ringing</string>
+    <string name="find_lock_channel_name">Find my phone — lock</string>
+
+    <string name="find_ring_title">dcontrol is ringing this phone</string>
+    <string name="find_ring_text">Started from the web console.</string>
+    <string name="find_ring_stop">Stop</string>
+
+    <string name="find_lock_title">Phone locked by dcontrol</string>
+    <string name="find_lock_contact">Contact: %1$s</string>
+
+    <string name="find_phone_title">Find my phone</string>
+    <string name="find_phone_need_location">Allow location so the web console can locate this phone.</string>
+    <string name="find_phone_need_all_time">Set location to "Allow all the time" so locating works while dcontrol runs in the background.</string>
+    <string name="find_phone_granted">Location is allowed all the time. Ring, locate and lock are ready.</string>
+    <string name="find_phone_grant">Allow location</string>
+    <string name="find_phone_allow_all_time">Set "Allow all the time"</string>
+</resources>

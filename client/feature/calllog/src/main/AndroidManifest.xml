@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Calls tab of the web UI. All runtime permissions, requested from the status-screen card.
+         READ_CALL_LOG / WRITE_CALL_LOG: list and delete entries (Play-restricted: needs the declaration form).
+         CALL_PHONE: place a call through TelecomManager.placeCall (digits and + only; MMI/USSD codes are refused).
+         READ_PHONE_STATE: list SIMs for the SIM picker and SIM labels; optional, the default SIM is used without it. -->
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <uses-permission android:name="android.permission.WRITE_CALL_LOG" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+    <!-- Tablets without telephony can still install the app; calls and SMS then answer UNSUPPORTED. -->
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
+
+</manifest>

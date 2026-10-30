@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="connection_channel_name">Controller connection</string>
+    <string name="connection_channel_description">Shows while the phone stays connected to your dcontrol controller.</string>
+    <string name="connection_notification_title">dcontrol</string>
+    <string name="connection_notification_online">Connected as %1$s</string>
+
+    <string name="connection_title">This phone</string>
+    <string name="connection_status_online">Online</string>
+    <string name="connection_status_connecting">Connecting…</string>
+    <string name="connection_status_reconnecting">Reconnecting…</string>
+    <string name="connection_status_idle">Not connected</string>
+    <string name="connection_status_unpaired">Not paired</string>
+    <string name="connection_retry_in">Next attempt in %1$d s</string>
+    <string name="connection_device_name">Device name</string>
+    <string name="connection_controller">Controller</string>
+    <string name="connection_battery_title">Battery optimization</string>
+    <string name="connection_battery_text">Some phones stop background apps aggressively. Exempting dcontrol from battery optimization keeps the connection alive.</string>
+    <string name="connection_battery_exempt">dcontrol is exempt from battery optimization.</string>
+    <string name="connection_battery_open">Open settings</string>
+    <string name="connection_unpair">Unpair this phone</string>
+    <string name="connection_unpair_title">Unpair this phone?</string>
+    <string name="connection_unpair_text">The phone forgets this controller. Also remove it from the Devices page in the web app.</string>
+    <string name="connection_unpair_confirm">Unpair</string>
+    <string name="connection_cancel">Cancel</string>
+    <string name="connection_send_clipboard">Send clipboard</string>
+</resources>

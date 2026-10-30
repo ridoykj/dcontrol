@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="clipboard_title">Clipboard</string>
+    <string name="clipboard_text">Android only lets an app read the clipboard while it is in front. Send it from here, from the \"Send clipboard\" Quick Settings tile or from the connection notification. Text the web app sends is copied to this phone automatically.</string>
+    <string name="clipboard_send">Send clipboard to web</string>
+    <string name="clipboard_sent">Clipboard sent to the web app.</string>
+    <string name="clipboard_empty">The clipboard has no text.</string>
+    <string name="clipboard_offline">Not connected to the controller.</string>
+    <string name="clipboard_tile_label">Send clipboard</string>
+</resources>

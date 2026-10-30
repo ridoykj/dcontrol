@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Messages tab of the web UI. Runtime permissions of the SMS group, requested from the status-screen card.
+         Both are Play-restricted (declaration form) and, on Android 15+, restricted settings for sideloaded APKs.
+         There is deliberately no RECEIVE_SMS: new messages are noticed with a ContentObserver on the provider
+         once the default SMS app has stored them. -->
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
+
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
+
+    <application>
+        <!-- Sent/delivered reports of SMS sent from the web. Not exported: the PendingIntents are explicit and
+             run with this app's identity, so no other app can deliver to it. -->
+        <receiver
+            android:name=".data.SmsStatusReceiver"
+            android:exported="false" />
+    </application>
+
+</manifest>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sms_access_title">Messages</string>
+    <string name="sms_access_granted">The web app can read your SMS conversations and send SMS from this phone.</string>
+    <string name="sms_access_missing">Allow SMS access to read and send text messages from the web app. Carrier charges apply to messages you send.</string>
+    <string name="sms_access_restricted_hint">If Android doesn\'t show the request or the switch is greyed out: open App info → ⋮ → Allow restricted settings, then try again. Android 15+ requires this for apps installed outside an app store.</string>
+    <string name="sms_access_grant">Allow access</string>
+    <string name="sms_access_open_settings">Open app settings</string>
+</resources>

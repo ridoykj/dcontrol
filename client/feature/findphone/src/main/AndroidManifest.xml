@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Find tab of the web UI. Locate needs location while the app runs in the background (inside the
+         connectedDevice service), so background location ("Allow all the time") is requested after the
+         foreground grant. Ring plays on the alarm stream; Lock uses the Accessibility service. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <application>
+        <!-- Stop action of the "Ringing" notification. Not exported: the PendingIntent is explicit. -->
+        <receiver
+            android:name=".service.RingStopReceiver"
+            android:exported="false" />
+    </application>
+
+</manifest>

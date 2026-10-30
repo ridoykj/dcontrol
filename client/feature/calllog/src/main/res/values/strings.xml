@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calls_access_title">Calls</string>
+    <string name="calls_access_call_log_granted">The web app can show and delete call log entries.</string>
+    <string name="calls_access_call_log_missing">Allow call log access to see and delete calls from the web app.</string>
+    <string name="calls_access_phone_granted">The web app can start calls on this phone and choose the SIM.</string>
+    <string name="calls_access_phone_missing">Allow the phone permission to start calls from the web app. The call itself happens on this phone.</string>
+    <string name="calls_access_grant">Allow access</string>
+    <string name="calls_access_open_settings">Open app settings</string>
+</resources>

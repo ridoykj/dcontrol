@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_listener_label">dcontrol notification mirroring</string>
+
+    <string name="notification_access_title">Notifications</string>
+    <string name="notification_access_granted">Notifications are mirrored to the web app while it is open. Nothing is stored on the controller.</string>
+    <string name="notification_access_missing">Allow Notification access to see, dismiss and reply to this phone\'s notifications from the web app.</string>
+    <string name="notification_access_restricted_hint">If the switch is greyed out (app not installed from a store): open App info, tap ⋮ and choose \"Allow restricted settings\", then try again.</string>
+    <string name="notification_access_grant">Open settings</string>
+    <string name="notification_access_choose_apps">Choose apps</string>
+
+    <string name="mirrored_apps_title">Mirrored apps</string>
+    <string name="mirrored_apps_text">Apps appear here once they post a notification. Turn an app off to keep its notifications on this phone only.</string>
+    <string name="mirrored_apps_empty">No notifications seen yet.</string>
+    <string name="mirrored_apps_back">Back</string>
+</resources>

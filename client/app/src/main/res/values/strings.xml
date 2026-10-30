@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">dcontrol</string>
+    <string name="onboarding_title">Manage this phone from your browser</string>
+    <string name="onboarding_text">Pair this phone with your dcontrol controller. The phone keeps a secure connection open so you can see its status from the web app.</string>
+    <string name="onboarding_notifications_title">Connection notification</string>
+    <string name="onboarding_notifications_text">Android shows a permanent notification while the phone is connected. Allow notifications so you can see the connection status.</string>
+    <string name="onboarding_allow_notifications">Allow notifications</string>
+    <string name="onboarding_scan">Scan pairing code</string>
+</resources>
