@@ -13,31 +13,22 @@ the controller, and the controller relays commands to the phone using a versione
 
 ## Status
 
-**Phase 1 (foundation):**
+| Phase | Features | Plan |
+|---|---|---|
+| 1 | Accounts with email verification and password reset, JWT + rotating refresh tokens, QR pairing, persistent device connection, live status, ping | [phase-1.md](controller/docs/plans/phase-1.md) |
+| 2 | File manager and transfers, notification mirroring, clipboard sync, device info | [phase-2.md](controller/docs/plans/phase-2.md) |
+| 3 | Contacts, call log and placing calls, SMS | [phase-3.md](controller/docs/plans/phase-3.md) |
+| 4 | Screen mirroring over WebRTC, remote control, find my phone | [phase-4.md](controller/docs/plans/phase-4.md) |
+| 5 | Remote camera: live view, photos, clips, front/back, consent on the phone | [phase-5.md](controller/docs/plans/phase-5.md) |
+| 6 | Remote microphone: live listening and audio clips, consent on the phone | [phase-6.md](controller/docs/plans/phase-6.md) |
 
-- Accounts with email verification and password reset.
-- JWT access tokens and rotating refresh tokens.
-- QR pairing.
-- Persistent device connection with heartbeats and backoff.
-- Live online/offline and battery status, plus a ping command.
-
-See [controller/docs/plans/phase-1.md](controller/docs/plans/phase-1.md).
-
-Phases 2–4 are not started yet. Planned:
-
-- File manager.
-- Notification mirroring.
-- Clipboard sync.
-- Device dashboard.
-- Contacts, call log and SMS.
-- Screen mirroring and remote control.
-- Find my phone.
+Feature docs are in [controller/docs/features/](controller/docs/features/).
 
 ## Quick start
 
 Prerequisites: JDK 25, Docker, and Android Studio with SDK 37 (for the client).
 
-1. Start the controller (it starts PostgreSQL and Mailpit through Docker Compose):
+1. Start the controller (it starts PostgreSQL, Mailpit and coturn through Docker Compose):
 
    ```bash
    cd controller && ./mvnw spring-boot:run
@@ -56,5 +47,6 @@ Prerequisites: JDK 25, Docker, and Android Studio with SDK 37 (for the client).
 
 ## Knowledge base
 
-`controller/ai-context/topics/` holds the hand-written architecture, database, security and Android notes.
-`controller/ai-context/generated/` is regenerated from source on every build.
+[controller/ai-context/](controller/ai-context/README.md) is the knowledge base for AI agents and people:
+hand-written topics (workflow, feature map, architecture, Android, security, database) and files generated from
+source on every build. [AGENTS.md](AGENTS.md) (also read through `CLAUDE.md`) is the entry point for coding agents.

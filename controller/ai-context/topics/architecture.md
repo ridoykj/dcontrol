@@ -33,6 +33,9 @@ Browser ──WS /ws/web (ticket)───┤ controller ──WS /ws/device (de
 | `device` | Device + FSM, DeviceStatus, `PresenceService`, socket handlers, `DeviceCommandRelay`, `RelayedCommands`, `RelayGuards` (per-device limit + audit line), `DeviceEventHandler`, `BrowserMessageHandler` (+ `ClosedListener`), `DeviceConnectionListener` (ready / disconnected), `DeviceApiAuth`, `DeviceBlobController`, ws tickets |
 | `webrtc` | `IceServers` (per-socket ICE list, `{host}` from the handshake), `TurnCredentials` (coturn REST scheme) |
 | `screen` | `ScreenSessionService` (in-memory sessions bound to one browser socket and one phone; consent timeout; cleanup on close), `ScreenProtocol`, `ScreenConfig` |
+| `camera` | `CameraSessionService` (screen-style sessions plus `camera.capture` / `camera.switch`), `CameraProtocol`, `CameraMediaService` (spool `camera/`), `CameraMediaController` (phone PUT, browser GET), `CameraConfig` |
+| `mic` | The camera's shape without video or switch: `MicSessionService`, `MicProtocol`, `MicMediaService` (spool `mic/`), `MicMediaController`, `MicConfig` |
+| `media` | `CaptureMediaStore` (base of both media services: single-use upload slots bound to one phone, type from magic bytes, size/length caps, disk spool + in-memory index, TTL sweep, delete on unpair and on startup), `Mp4Duration` (`mvhd` reader) |
 | `findphone` | `find.ring` / `find.lock` relays, `DeviceLocation` (T_DEVICE_LOCATION, last fix per device), `LocationService`, `LocationController` |
 | `files`, `notification`, `clipboard`, `contacts`, `calls`, `sms` | Payload records and the `RelayedCommand` / `DeviceEventHandler` beans of each feature; `AppIconStore`; `ContactPhotoController` |
 | `transfer` | `FileTransfer` + FSM TRANSFER, `TransferService`, `TransferSpool` (disk), download tickets, browser and device controllers, cleanup job |
@@ -61,9 +64,12 @@ that rolls back. Mail is sent the same way (`MailService.OutgoingMail`).
 | Path | Contents |
 |---|---|
 | `routes/` | TanStack Router file routes; `routeTree.gen.ts` is generated, never edit it |
-| `features/auth`, `features/devices`, `features/files`, `features/notifications`, `features/clipboard`, `features/contacts`, `features/messages`, `features/calls`, `features/screen`, `features/findphone` | `api/`, `components/`, `hooks/`, `lib/`, `pages/`, `schemas/` (zod) |
+| `features/auth`, `features/devices`, `features/files`, `features/notifications`, `features/clipboard`, `features/contacts`, `features/messages`, `features/calls`, `features/screen`, `features/camera`, `features/mic`, `features/findphone` | `api/`, `components/`, `hooks/`, `lib/`, `pages/`, `schemas/` (zod) |
 | `shared/api` | `client.ts` (fetch + refresh), `session.ts` (in-memory token), `problem.ts` |
 | `shared/ws` | `RealtimeClient` (reconnect, requestId correlation, fire-and-forget `send`; `RealtimeError.permission`), `RealtimeProvider`, `useRealtimeEvent` (typed push subscriptions), `useRelayedPages` (cursor-paged phone lists on `useInfiniteQuery`) |
+| `shared/rtc` | `peer.ts` (`toRtcIceServers`, `gatheringComplete` with the 4 s cap, `readStats` → fps/kbps/direct-or-relay), `StatsLine`; used by screen, camera and mic |
+| `shared/lib` | `utils.ts` (`cn`), `react-aria-utils.ts`, `saveBlob` (save a blob the page already holds, used for captures) |
+| `shared/components` | `AppShell`, `Card`, `Alert`, `form/` |
 | `shared/components/ui/shadcn` | Vendored React Aria Tailwind components (`@react-aria` shadcn registry); regenerate with the shadcn CLI |
 
 Server state lives in TanStack Query. `useDeviceRealtimeSync` patches the device queries from
@@ -93,8 +99,18 @@ Server state lives in TanStack Query. `useDeviceRealtimeSync` patches the device
     checked before `RelayedCommands`.
   - A session id naming another socket's or another device's session is a protocol violation. An unknown one is
     ignored, because it can race with the end of the session.
-- **Media never touches the controller:** screen video, audio and remote input go peer to peer, or through coturn.
-  The controller relays only the one SDP offer and the one answer of each session.
+- **Live media never touches the controller:** screen, camera and microphone streams and remote input go peer to
+  peer, or through coturn. The controller relays only the one SDP offer and the one answer of each session.
+- **Consent-gated capture (Phases 5 and 6, camera and mic):** copy the screen session shape and add:
+  - the phone's own consent prompt for every session and a typed FGS with an ongoing notification + Stop; no
+    hidden or automatic mode;
+  - a `*.capture` command relayed with `DeviceCommandRelay.send(..., timeout)` (longer than the 15 s default);
+    before relaying, the session service opens a `CaptureMediaStore` slot and sends its `mediaId`; the phone PUTs
+    the file to `/api/device-api/<feature>/{mediaId}`, then answers; the browser loads
+    `GET /api/devices/{id}/<feature>/media/{mediaId}` as a blob and saves it with `saveBlob`;
+  - captures are files on disk with a TTL, never database rows (no migration);
+  - `<feature>.start` and `<feature>.capture` limited and audited with `RelayGuards`;
+  - a `PhonePermission` value for the runtime grant, and `media-src 'self' blob:` already allows playback.
 
 ## Not built yet
 
@@ -102,7 +118,7 @@ Server state lives in TanStack Query. `useDeviceRealtimeSync` patches the device
   local).
 
 The device page (`routes/_authenticated/devices/$deviceId/`) is a layout route with tabs. Overview, Screen,
-Files, Notifications, Clipboard, Contacts (`?q=&id=&key=`), Messages (`?thread=` or `?to=`), Calls (`?type=`) and
+Camera, Microphone (`mic`), Files, Notifications, Clipboard, Contacts (`?q=&id=&key=`), Messages (`?thread=` or `?to=`), Calls (`?type=`) and
 Find are child routes, and the Files route keeps the open folder in `?path=`. Uploads
 use `uploadInChunks` (8 MiB chunks, resume from the server's `receivedBytes`). Downloads wait for
 `transfer.status` READY, then open the ticket URL as a native download.

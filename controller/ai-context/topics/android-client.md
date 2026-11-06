@@ -5,10 +5,12 @@ Contract with the controller: `controller/docs/protocol/ws-v1.md` and `controlle
 
 ## Module map
 
+Dependencies between modules: `../generated/android-modules.md`.
+
 | Module | Kind | Responsibility |
 |---|---|---|
 | `:app` | Android app | `DControlApplication` (`@HiltAndroidApp`), `MainActivity`, `navigation/AppRoot` (NavHost, feature cards on the status screen), `onboarding/` |
-| `:core:websocket` | **Kotlin/JVM** (no Android) | `protocol/` (envelope, Phase 1 + `Phase2Protocol.kt` payloads, `MessageTypes`, `ErrorCodes`, `CloseCodes`, `ProtocolCodec`), `Backoff`, `DeviceSocket` (`sendEvent`), `ConnectionState`, `DeviceCredentials`, `CommandHandler`, `EventHandler`, `DeviceEventSender`, `typedCommand` |
+| `:core:websocket` | **Kotlin/JVM** (no Android) | `protocol/` (envelope and Phase 1 payloads in `Protocol.kt`, then `Phase2Protocol.kt` … `Phase6Protocol.kt` + `Phase3Values.kt`, `MessageTypes`, `ErrorCodes`, `CloseCodes`, `ProtocolCodec`), `Backoff`, `DeviceSocket` (`sendEvent`), `ConnectionState`, `DeviceCredentials`, `CommandHandler`, `EventHandler`, `DeviceEventSender`, `typedCommand` |
 | `:core:network` | Android library | `NetworkModule` (OkHttpClient with 20 s ping, Json, `ProtocolCodec`), `RetrofitFactory`, `ApiException` + `apiCall`, `credentials/`, `device/DeviceInfoProvider`, `device/DeviceHttpClient` (`Authorization: Device …` for `/api/device-api/**`) |
 | `:core:storage` | Android library | `StorageRoots` (mounted `StorageManager` volumes, blocked `Android/data`/`obb` on 30+), `StorageAccess` (All files access / legacy permissions), `openAllFilesAccessSettings` |
 | `:core:database` | Android library | Room 3 (`androidx.room3`) `DControlDatabase`: `transfers` (`TransferEntity`, `TransferDao`), `mirrored_apps` (`MirroredAppEntity`, `MirroredAppDao`) |

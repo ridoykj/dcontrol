@@ -105,12 +105,13 @@ Other limits live in `application.yaml` and can be overridden like any Spring pr
 
 ```
 compose.yaml            PostgreSQL 18, Mailpit and coturn for dev
-ai-context/topics/      hand-written knowledge base (architecture, DB conventions, security, Android)
+ai-context/README.md    knowledge base index for AI agents (topics/ hand-written, generated/ from source)
+ai-context/topics/      workflow, feature map, architecture, DB conventions, security, Android
 ai-context/generated/   rebuilt by sync.mjs during the build; do not edit
 docs/features/          one doc per feature
 docs/protocol/ws-v1.md  WebSocket protocol contract
 docs/plans/             phase plans and decisions
-src/main/java/com/dcontrol/controller/{common,auth,pairing,device,spa}
+src/main/java/com/dcontrol/controller/   one package per feature + common/ (see ai-context/topics/architecture.md)
 src/main/resources/db/migration   Flyway (run SchemaConventionIntegrationTest after changes)
 src/main/frontend/      React + TanStack Router + Tailwind + React Aria
 ```
